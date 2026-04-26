@@ -1,0 +1,221 @@
+// Fin-Agri Score — Database schema (Objective 2)
+// PostgreSQL via Prisma. Every table required by the brief is modelled here.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Core entities ----------
+
+model Farmer {
+  id              String   @id @default(cuid())
+  fullName        String
+  gender          String?  
+  age             Int?
+  province        String?  
+  district        String?  
+  ward            String?
+  farmSizeHa      Float?   
+  phone           String?
+  nationalId      String?
+  education       String?  
+  householdSize   Int?
+  maritalStatus   String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  applications     LoanApplication[]
+  farmActivities   FarmActivity[]
+  assets           Asset[]
+  socialCapital    SocialCapital[]
+  householdIncome  HouseholdIncome?
+
+  @@index([fullName])
+  @@index([district])
+}
+
+model HouseholdIncome {
+  id                 String   @id @default(cuid())
+  farmerId           String   @unique
+  mainSource         String?  
+  mainAmount         Float?   
+  secondarySource    String?
+  secondaryAmount    Float?
+  thirdSource        String?
+  thirdAmount        Float?
+  shockExperienced   Boolean  @default(false)
+  copingIndex        Int?     
+  dietaryDiversity   Int?     
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  farmer             Farmer   @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+}
+
+model LoanApplication {
+  id              String   @id @default(cuid())
+  farmerId        String
+  amountRequested Float
+  purpose         String                 
+  season          String?                
+  status          String   @default("PENDING") 
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  farmer          Farmer          @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  creditScores    CreditScore[]
+  satelliteData   SatelliteData[]
+  auditLogs       AuditLog[]
+
+  @@index([farmerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model CreditScore {
+  id                    String   @id @default(cuid())
+  applicationId         String
+  predictedLabel        String   
+  classProbabilities    Json     
+  repaymentProbability  Float    
+  finAgriScore          Int      
+  riskBand              String   
+  recommendation        String
+  topFactors            Json?    
+  modelName             String?
+  modelVersion          String?
+  createdAt             DateTime @default(now())
+
+  application           LoanApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@index([createdAt])
+  @@index([riskBand])
+}
+
+// ---------- Supporting farmer data ----------
+
+model FarmActivity {
+  id             String   @id @default(cuid())
+  farmerId       String
+  cropType       String?
+  estimatedYield Float?   
+  irrigation     String?  
+  season         String?
+  inputUsage     String?  
+  createdAt      DateTime @default(now())
+
+  farmer         Farmer   @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+
+  @@index([farmerId])
+}
+
+model Asset {
+  id             String   @id @default(cuid())
+  farmerId       String
+  assetType      String   
+  assetName      String
+  quantity       Float?
+  estimatedValue Float?
+  createdAt      DateTime @default(now())
+
+  farmer         Farmer   @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+
+  @@index([farmerId])
+}
+
+model SocialCapital {
+  id                   String   @id @default(cuid())
+  farmerId             String
+  groupMembership      Boolean  @default(false)
+  groupName            String?
+  yearsInGroup         Int?
+  leadershipRole       String?  
+  guarantorAvailable   Boolean  @default(false)
+  createdAt            DateTime @default(now())
+
+  farmer               Farmer   @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+
+  @@index([farmerId])
+}
+
+// ---------- Environmental ----------
+
+model SatelliteData {
+  id                String   @id @default(cuid())
+  applicationId     String
+  rainfall30dMm     Float?   
+  rainfall90dMm     Float?   
+  rainfallAnomaly   Float?
+  ndvi90dMean       Float?   
+  ndvi90dStd        Float?   
+  environmentScore  Float?
+  environmentRisk   String?  
+  observationDate   DateTime?
+  source            String?  // high-level label, e.g. "NASA POWER (live)" or "District climatology (fallback)"
+  sourceKind        String?  // machine tag: live | fallback | user | edited
+  provenance        Json?    // per-field source map, e.g. { rainfall30dMm: "autofill_live", ... }
+  confirmedAt       DateTime?
+  confirmedBy       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  application       LoanApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@index([createdAt])
+}
+
+// ---------- Reference: Zimbabwe district climatology ----------
+
+model DistrictProfile {
+  id                     String   @id @default(cuid())
+  province               String
+  district               String   @unique
+  centroidLat            Float
+  centroidLon            Float
+  agroEcoZone            String   
+  rainfall90dClimMm      Float    
+  rainfall30dClimMm      Float    
+  ndviBaseline           Float    
+  ndviVariability        Float    
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@index([province])
+}
+
+// ---------- System users & audit ----------
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  email        String   @unique
+  passwordHash String
+  role         String   @default("LOAN_OFFICER") 
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  auditLogs    AuditLog[]
+}
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  applicationId  String?
+  userId         String?
+  action         String   
+  details        Json?
+  createdAt      DateTime @default(now())
+
+  application    LoanApplication? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  user           User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([applicationId])
+  @@index([createdAt])
+}

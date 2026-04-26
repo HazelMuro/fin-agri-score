@@ -1,0 +1,77 @@
+# Fin-Agri Score — local / demo stack (P9)
+# Usage from repo root:
+#   docker compose up --build
+# Then: http://localhost:8080 (web) · http://localhost:4000 (API)
+#
+# Inference in Docker (needs joblib model files under ./artifacts/model):
+#   docker compose --profile inference up --build
+#
+# Before first API start, apply migrations (entrypoint runs migrate deploy).
+# Seed demo users + data:  docker compose run --rm api sh -c "npm run seed"
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: fin_agri_score
+    ports:
+      - "5432:5432"
+    volumes:
+      - fin_agri_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d fin_agri_score"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: production
+      PORT: "4000"
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/fin_agri_score?schema=public
+      JWT_SECRET: ${JWT_SECRET:-change_me_use_at_least_sixteen_chars}
+      JWT_EXPIRES_IN: 7d
+      CORS_ORIGIN: http://localhost:8080,http://127.0.0.1:8080
+      # Default: inference on your host (run uvicorn locally on port 8000). With --profile inference, switch to http://inference:8000
+      INFERENCE_SERVICE_URL: ${INFERENCE_SERVICE_URL:-http://host.docker.internal:8000}
+      ARTIFACTS_DIR: /artifacts
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./artifacts/output:/artifacts:ro
+
+  inference:
+    profiles: ["inference"]
+    build:
+      context: ./inference
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      MODEL_DIR: /model
+    volumes:
+      - ./artifacts/model:/model:ro
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:4000
+    depends_on:
+      - api
+    ports:
+      - "8080:80"
+
+volumes:
+  fin_agri_pg:

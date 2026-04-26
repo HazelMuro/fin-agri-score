@@ -1,0 +1,427 @@
+feature,importance
+need_Yes,0.05964997457448496
+income_main_amount,0.057350458346113506
+tot_income,0.05684883890996183
+crp_proddif_count,0.03929955012835381
+shock_count,0.03635120993278641
+resp_age,0.03628234585399481
+"hh_education_Completed higher education (university, college) degree",0.03331518149560326
+shock_economic_count,0.030637618731652657
+income_quintile_adm1,0.02629410898240061
+income_main_comp_A lot less (less than half as much),0.025763292441871047
+regional_yield_mean,0.024631587672103696
+covid_disruption_count,0.024226863104639562
+hh_size,0.02372798550681891
+ls_num_now,0.02313048361079214
+hh_agricactivity_Yes - both crop and livestock production,0.02269066780686743
+modis_ndvi_90d_mean,0.022233169012051173
+ls_pct_change,0.022128728439885954
+resp_gender_Male,0.021536426557686776
+need_No,0.02123719245306487
+crp_landsize_Less than 1 ha,0.020936416321225584
+modis_ndvi_90d_std,0.019943071290505134
+hh_wealth_water_Public tap,0.01961790476892745
+hh_wealth_light_Candle,0.019234950003296218
+resp_gender_Female,0.01916671321666653
+shock_noshock_No,0.018493017135393204
+need_cashassistance_Yes,0.018415251412756756
+hh_education_Completed primary school,0.01810323959309891
+shock_noshock_Yes,0.017459433243119077
+need_cashassistance_No,0.01664763939562397
+chirps_rain_30d_mm,0.016579983552405867
+covid_none_Yes,0.015720956962594415
+hh_wealth_light_Electricity (from generator or electrical grid),0.015365096722954897
+hh_wealth_light_Other (no electric supply to the house),0.01510648949754834
+crp_proddif_irrigation_No,0.01492488179747846
+chirps_rain_90d_mm,0.013838332733188278
+shock_lostemplorwork_No,0.013716508470028478
+shock_lostemplorwork_Yes,0.01354672596488908
+ls_num_lastyr,0.013020596512935896
+crp_harv_change_A lot less (less than half as much),0.010625060682556193
+crp_area_change_Same,0.010499620544386584
+income_main_comp_Same,0.010339760365265202
+income_main_comp_More,0.01031380518610156
+hh_age_18 to 40,0.010072140217616524
+covid_goodstransp_No,0.010005377229776012
+hh_wealth_light_Petrol lamp,0.009856114227812818
+covid_none_No,0.009380259757454577
+income_primary_share,0.00897620348433819
+hh_agricactivity_No,0.00877722159360512
+crp_salesdif_Yes,0.008560354583915814
+crp_harv_change_Less,0.008076480653658662
+need_animalfeed_Yes,0.008040381284575768
+crp_area_change_Less,0.00790950701830154
+hh_education_Completed secondary school,0.00783717285987356
+hh_age_41 to 65,0.00782107690465649
+hh_wealth_light_Lamp with batteries,0.007752155723661168
+crp_proddif_Yes,0.007523175934603968
+hh_wealth_water_Private tap from piped water,0.007500969924986585
+crp_landsize_More than 10 ha,0.007500961970638272
+crp_proddif_irrigation_Yes,0.00732850748704112
+income_third_Don't know,0.006660032136374757
+ls_num_diff,0.006534704721139803
+ls_proddif_No,0.006486980820630483
+income_main_Off-farm daily wages and other non-agricultural casual employment,0.006375842793158589
+needs_expressed_count,0.006250651369100292
+ls_salesdif_Yes,0.006217281515109665
+covid_goodstransp_Yes,0.00564746674391556
+hh_wealth_water_Other safe source,0.005352853280231073
+need_loans_No,0.005342780309428495
+need_loans_Yes,0.005179395751780044
+need_animalfeed_No,0.004930478542892175
+income_main_No income source in the last 3 months and used exclusively debt,0.004690176987448391
+hh_wealth_toilet_Traditional pit latrine (no water),0.004410206588261149
+shock_sicknessordeathofhh_No,0.004409417331169812
+ls_proddif_Yes,0.004291136423658706
+income_sec_amount,0.004270036545716036
+crp_landsize_5 to 10 ha,0.004249274873606321
+hh_wealth_water_Protected well,0.004209770526282125
+shock_personal_count,0.0040622155845580175
+income_main_comp_Less,0.004033378602256934
+"ls_main_Cattle (cow, beef, veal, yak, buffalo)",0.003909460923353927
+shock_sicknessordeathofhh_Yes,0.0038734397728596493
+income_main_Daily wage on farms and other casual employment in agricultural sector,0.0038008352972107753
+"income_main_Income not derived from work, remittances",0.0037896476561274746
+"hh_wealth_toilet_Open pit (whole in the ground for excrement without water, roof or wall)",0.003557495106646267
+ls_main_Goats,0.0035408767935869324
+crp_area_change_More,0.003506594166464513
+income_main_Stable employment in non-agricultural sector,0.0034807320600069793
+"income_main_Non-agricultural self-employed or liberal profession, doctor, architect, lawyer, including restaurant",0.003447086926162164
+crp_proddif_nafertilizer_No,0.003363970116789677
+hh_wealth_toilet_Flush latrine (toilet with water),0.002949624073448552
+need_fertilizers_Yes,0.002921962645961966
+crp_proddif_seedquality_Yes,0.002868196037955451
+ls_salesdif_No,0.0028641845613045823
+"ls_main_Poultry (chicken, guineafowl, duck, etc)",0.0027872161045002695
+crp_proddif_No,0.0027443180170878094
+income_sec_No second most important source of income,0.0027177373816606146
+income_main_Public employment,0.0026977355672817035
+crp_salesdif_No,0.002676593913467352
+ls_num_nochange_Yes,0.0025528180376241127
+ls_proddif_diseases_Yes,0.002508971977046186
+crp_landsize_1 to 5 ha,0.0025049458587707244
+shock_climate_count,0.002479010237303389
+crp_main,0.002478872691824322
+income_source_count,0.002464753644105981
+"income_main_Farmer, production and sale of staple crops",0.0024438958158012045
+hh_wealth_water_River,0.0024044359913951434
+crp_salesprice_Less,0.002321130493278679
+ls_num_inc_moreborn_No,0.0021874898508132297
+covid_stayhome_No,0.0021025901060013636
+covid_stayhome_Yes,0.002096172730688274
+ls_num_nochange_No,0.0020767323319710574
+"hh_residencetype_Permanent resident - you have been living in your village, town for longer than two years and this is what you consider your habitual residence",0.0020481735040762503
+income_sec_comp_Same,0.00204536242083311
+ls_food_supply_commonpasture_No,0.0020432634198985886
+need_veterinaryinputs_Yes,0.0019742930074480645
+"ls_salesmain_Poultry (chicken, guineafowl, duck, etc.)",0.0019531044051028902
+income_sec_comp_A lot less (less than half as much),0.0019402025508450942
+hh_maritalstat_Separated,0.0019371399508789045
+income_sec_comp_Less,0.0019151668108662733
+crp_seed_gov_No,0.0019010788388740321
+ls_num_dec_animalsdied_Yes,0.0018864336467655405
+crp_seed_market_Yes,0.0018852680054163309
+crp_irrigation_Rainfed,0.0018063407854459297
+need_seeds_No,0.001737562917086713
+need_restockinganimals_No,0.0017328914818123251
+crp_harv_change_More,0.0017308657602466476
+ls_salesmain_Swine,0.001723320852358298
+crp_proddif_seedquality_No,0.0017225135843883788
+crp_seed_market_No,0.0016958034736782024
+ls_salesprice_Less,0.0016937005711318697
+need_restockinganimals_Yes,0.0016544090552727188
+hh_agricactivity_Yes - crop production,0.0016132549634611788
+crp_seed_company_Yes,0.0016057394199391571
+covid_marketclosed_No,0.0015672459796751634
+crp_proddif_nafertilizer_Yes,0.0015381910014780694
+"income_main_Farmer, production and sale of vegetable or fruit",0.0015272537429160272
+shock_cantworkordobusiness_No,0.0015160906921035172
+shock_othernathazard_No,0.0015027128724730166
+ls_salesdif_lowprices_No,0.0014804065434692111
+"hh_residencetype_Recent migrant not forcefully displaced - you have been living in your current place of residence for less than two years and you moved there voluntarily for work, family or other reasons that are not related to conflict or natural disaster",0.0014358432310733861
+shock_napasture_No,0.0014349473920841588
+crp_seed_company_No,0.0013971650312481266
+ls_num_dec_soldmoregoodprice_No,0.0013955345521496664
+crp_proddif_nainsecticides_No,0.0013938263424527874
+crp_proddif_naseeds_Yes,0.0013481658713467661
+"crp_irrigation_Manually from water surface, well or other water source",0.0012793699102273738
+crp_seed_ownprod_Yes,0.0012771969980411968
+need_fertilizers_No,0.0012706985245218242
+income_main_Informal agricultural trade excluding producers,0.001234762510054422
+ls_num_inc_moreborn_Yes,0.0012227751717770769
+ls_proddif_diseases_No,0.0012027689944116376
+ls_food_supply_purchased_Yes,0.0012013724243692128
+crp_proddif_soilerosion_Yes,0.001199076202225133
+need_veterinaryinputs_No,0.0011986276171551782
+shock_othernathazard_Yes,0.00117169978927336
+crp_irrigation_Canal,0.0011475157726418236
+crp_proddif_nalabour_No,0.001115860402830455
+crp_harv_change_Same,0.0011118259306699212
+ls_food_supply_commonpasture_Yes,0.0011027772475603822
+ls_proddif_diffeedpurchase_Yes,0.0010966200737374835
+hh_agricactivity_Yes - livestock production,0.0010511074276257058
+crp_proddif_namachinery_Yes,0.0010371348136189668
+crp_proddif_nainsecticides_Yes,0.001001238649275915
+ls_food_supply_purchased_No,0.0009999804310025916
+need_seeds_Yes,0.0009843956748043486
+covid_marketclosed_Yes,0.0009741530929343686
+hh_maritalstat_Married,0.0009731956818434909
+hh_age_Over 65,0.0009433528533253363
+covid_borderclosed_No,0.0009409342561636252
+need_marketingsupport_Yes,0.0009303793279989351
+income_third_No third most important source of income,0.0009284058940831464
+crp_salesdif_count,0.0009223139323827381
+ls_num_dec_animalsdied_No,0.000919226723453522
+income_sec_comp_More,0.0009063820525964455
+shock_napasture_Yes,0.0009057621413927968
+shock_flood_Yes,0.0009038156981039838
+shock_bio_count,0.0008501609656929457
+ls_proddif_constaccesstowater_Yes,0.0008358192729701553
+crp_proddif_nalabour_Yes,0.0008247920371028568
+"hh_wealth_toilet_None, bush",0.000805546799262058
+covid_borderclosed_Yes,0.0007887974223091564
+shock_otherintrahhshock_Yes,0.0007839697111546137
+ls_salesdif_smallerprofits_Yes,0.0007797108689309776
+income_main_No income source in the last 3 months and used exclusively savings,0.0007669470619623036
+crp_proddif_naseeds_No,0.0007071156934467048
+crp_seed_gov_Yes,0.0006837912044816537
+"income_main_Farmer, production and sale of cashcrops",0.0006655574461937797
+crp_proddif_plantdisease_No,0.0006586508457809916
+crp_salesprice_More,0.0006583935362034858
+crp_salesprice_Same,0.0006432090846076001
+need_supportforprocessprod_No,0.0006227611085991324
+crp_area_change_A lot less (less than half as much),0.00060814295466257
+shock_cantworkordobusiness_Yes,0.0005746889968867352
+ls_food_supply_openpasture_No,0.0005665487723238271
+income_main_comp_A lot more (increased by more than 50%),0.0005548638958953847
+crp_seed_ownprod_No,0.000553683312279875
+ls_proddif_diffeedpurchase_No,0.0005518730813112481
+hh_residencetype_Returnee - you have only come back to this residence in the last two years after having been forced to move to another location having fled conflict or natural disaster (if return was over 2 years ago the respondent is considered a permanent resident),0.0005487886335296356
+"income_sec_Farmer, production and sale of staple crops",0.0005432579732335432
+crp_saledif_lowprice_Yes,0.0005431017020042228
+ls_salesmain_Refused,0.0005302036759182505
+crp_saledif_lowdemand_No,0.0005175810562805152
+"income_main_Farmer, production and sale of livestock and livestock products",0.0005106127382383804
+ls_num_dec_soldmoredistsale_No,0.0005099360495965679
+crp_seed_bank_Yes,0.0005083712953166106
+"income_main_Income not derived from work, charity",0.0004940525464526247
+ls_proddif_constaccesstowater_No,0.0004858077252389485
+ls_food_supply_openpasture_Yes,0.00048565572634115463
+hh_gender_Male,0.00047509469192994456
+ls_num_dec_killedorgaveanml_No,0.00047505220839147964
+need_pesticides_No,0.00046809178177611906
+hh_maritalstat_Widowed,0.0004670558258584006
+income_sec_Refused,0.00045457804966938874
+crp_irrigation_Flood irrigation,0.0004224791703272221
+ls_salesprice_Same,0.00040784957237753345
+ls_proddif_difaccessvetserv_Yes,0.0003979810302728784
+hh_gender_Female,0.00039012816447082336
+crp_proddif_namachinery_No,0.00037671631051615004
+income_sec_Off-farm daily wages and other non-agricultural casual employment,0.0003761195501793264
+shock_drought_No,0.0003734880143964569
+income_sec_Daily wage on farms and other casual employment in agricultural sector,0.00036611356850819717
+need_veterinaryservices_No,0.00035944909167780854
+"ls_salesmain_Cattle (cow, beef, veal, yak, buffalo)",0.00035378360431435814
+"income_sec_Farmer, production and sale of cashcrops",0.000349647474120887
+"income_main_Income not derived from work, welfare transfer, pension, humanitarian aid",0.00034853972598929226
+shock_othereconomicshock_No,0.00033778469897160904
+ls_proddif_difaccessvetserv_No,0.0003323982577431523
+need_veterinaryservices_Yes,0.0003218589981826214
+"income_sec_Farmer, production and sale of livestock and livestock products",0.0003116405487336489
+ls_salesdif_damageandlosses_No,0.0003049573582691511
+crp_proddif_lostordamaged_Yes,0.00029844047230810823
+crp_proddif_plantdisease_Yes,0.00029577500167712623
+crp_proddif_lostordamaged_No,0.00029278322989653005
+hh_wealth_toilet_Communal latrine (with or without water),0.00028865170832438294
+shock_higherfoodprices_Yes,0.0002802506101830285
+ls_salesdif_lowprices_Yes,0.0002779794029629996
+need_supptransofanimalsorprod_Yes,0.0002756485668923758
+income_main_Stable employment in agricultural sector,0.00027285174901503306
+shock_flood_No,0.0002707142490232318
+income_third_comp_Less,0.00026618196175364763
+shock_animaldisease_No,0.00024958542284453746
+ls_main_Swine,0.00024612105524780587
+shock_drought_Yes,0.00024114052290803543
+need_marketingsupport_No,0.00024106572589482797
+covid_processclosed_Yes,0.00024022486776911759
+ls_salesprice_More,0.00023854265223051844
+income_third_amount,0.00023806601824445672
+crp_saledif_damagelosses_Yes,0.00023200336838200306
+ls_salesdif_lowdemand_No,0.00023018947319224152
+hh_education_None or did not complete primary school,0.00022876830489383792
+crp_landsize_Refused,0.00022587468064332256
+ls_num_dec_killedorgaveanml_Yes,0.00022258606632764055
+ls_proddif_theftorinsecurity_Yes,0.0002184184471904052
+hh_gender_Refused,0.00021114486217884944
+ls_proddif_constaccesstopasture_No,0.00021068599910781092
+"hh_maritalstat_Single, never married",0.0002099376053330456
+ls_proddif_difaccessvetinp_No,0.00020799290678812982
+need_accesstoirrigationwater_Yes,0.00020408383958548594
+need_accesstoland_No,0.000202935216752575
+crp_saledif_lowdemand_Yes,0.0002013775570559412
+need_accesstoland_Yes,0.00019705604800096142
+need_supptransofanimalsorprod_No,0.00019529021389866222
+shock_othermanmadehazard_No,0.00019307102077546426
+crp_saledif_damagelosses_No,0.00019164866805863808
+ls_salesprice_A lot less (less than half as much),0.00018924218231338818
+ls_salesdif_smallerprofits_No,0.00018727149134155978
+need_tools_No,0.00018568775016386318
+crp_saledif_marketing_cost_Yes,0.00018096945660570996
+ls_num_inc_didnotsellasmany_No,0.00017714830549683344
+ls_proddif_theftorinsecurity_No,0.0001718611687486325
+ls_proddif_constaccesstopasture_Yes,0.00015162122676575394
+shock_othermanmadehazard_Yes,0.00014825647154055062
+ls_salesdif_damageandlosses_Yes,0.00012915979157232004
+income_sec_comp_A lot more (increased by more than 50%),0.0001275806695186054
+need_accesstoirrigationwater_No,0.0001275068179098274
+crp_area_change_Refused,0.00012270015884219073
+crp_salesprice_A lot less (less than half as much),0.00011898446105188451
+income_sec_comp_Don't know,0.00011379601095944813
+need_acstomechanisedequipprod_No,0.00010909796054236398
+crp_area_change_A lot more (increased by more than 50%),0.00010876891111907624
+shock_hurricane_Yes,0.00010691714529282751
+income_main_Formal agricultural trade excluding producers,9.964001766506315e-05
+need_Don't know,9.711369547617558e-05
+income_sec_Public employment,8.480239860831535e-05
+"income_main_Income not derived from work, income from other rents",8.253845555703514e-05
+income_third_Refused,7.764055990427763e-05
+crp_landsize_Do not know,7.429834282110508e-05
+"income_sec_Income not derived from work, charity",7.168594462918855e-05
+crp_irrigation_Pump or mechanized,6.979147768517632e-05
+"income_third_Farmer, production and sale of vegetable or fruit",6.87748759112897e-05
+hh_wealth_water_Other unsafe source,6.737418491271022e-05
+need_animalsalemingarantdprice_Yes,6.322778915848744e-05
+hh_age_Don't know,5.51648294619011e-05
+hh_age_Under 18,4.945732823056247e-05
+ls_proddif_pooraccesstolmarket_Yes,4.8995442399413504e-05
+need_landrehabilitation_Yes,4.5977991487375454e-05
+shock_higherfuelprices_No,4.5049932493007996e-05
+hh_residencetype_Refugee - you were forced to flee your country because of conflict or natural disaster and you are now a refugee in your current place of residence,4.421709693506259e-05
+need_techsupporextensionserv_No,4.3450302153313084e-05
+ls_num_dec_anmlescloststolen_No,4.268079397554051e-05
+hh_maritalstat_Refused,4.020189852811512e-05
+need_storageequipmentorfaci_No,3.9976210409834675e-05
+shock_coldtemporhail_Yes,3.8040957935874594e-05
+crp_harv_change_A lot more (increased by more than 50%),3.7878829193722825e-05
+crp_proddif_nafuelorelect_No,3.7054260376695256e-05
+ls_salesmain_Don't know,3.383520043157795e-05
+crp_salesprice_Don't know,3.210329161741419e-05
+income_third_comp_Same,2.9613229981875953e-05
+crp_salesdif_Refused,2.880721256213655e-05
+need_fishequiorothersuppforfish_No,2.8637778487519457e-05
+crp_saledif_dif_processing_No,2.4891262667506705e-05
+ls_main_Other,2.1731233714292442e-05
+ls_num_dec_anmlescloststolen_Yes,2.1325319161811363e-05
+ls_proddif_lackoflabour_No,2.0245430396324686e-05
+ls_num_inc_receivedfree_No,1.6324475515904926e-05
+crp_salesprice_A lot more (increased by more than 50%),1.4458969461983677e-05
+crp_proddif_Don't know,1.2313971008656726e-05
+income_third_comp_A lot more (increased by more than 50%),4.313361098490064e-06
+income_third_comp_Don't know,4.201036949209492e-06
+crp_proddif_naplot_Yes,0.0
+crp_saledif_marketing_cost_No,0.0
+crp_proddif_naplot_No,0.0
+"income_third_Income not derived from work, welfare transfer, pension, humanitarian aid",0.0
+"income_third_Income not derived from work, charity",0.0
+crp_area_change_Don't know,0.0
+crp_harv_change_Don't know,0.0
+income_third_Off-farm daily wages and other non-agricultural casual employment,0.0
+income_third_comp_More,0.0
+income_third_Informal agricultural trade excluding producers,0.0
+income_third_comp_A lot less (less than half as much),0.0
+shock_theftofprodassets_No,0.0
+shock_othercropandlivests_Yes,0.0
+shock_othercropandlivests_No,0.0
+shock_animaldisease_Yes,0.0
+need_tools_Yes,0.0
+need_supportforprocessprod_Yes,0.0
+need_animalsalemingarantdprice_No,0.0
+need_storageequipmentorfaci_Yes,0.0
+shock_coldtemporhail_No,0.0
+shock_hurricane_No,0.0
+shock_violenceinsecconf_No,0.0
+shock_violenceinsecconf_Yes,0.0
+need_techsupporextensionserv_Yes,0.0
+"income_third_Non-agricultural self-employed or liberal profession, doctor, architect, lawyer, including restaurant",0.0
+shock_fire_No,0.0
+shock_theftofprodassets_Yes,0.0
+crp_seed_freedist_Yes,0.0
+crp_seed_bank_No,0.0
+crp_irrigation_Other,0.0
+crp_seed_freedist_No,0.0
+shock_fire_Yes,0.0
+shock_higherfuelprices_Yes,0.0
+shock_otherintrahhshock_No,0.0
+shock_higherfoodprices_No,0.0
+shock_pestoutbreak_No,0.0
+shock_othereconomicshock_Yes,0.0
+shock_plantdisease_No,0.0
+shock_pestoutbreak_Yes,0.0
+shock_plantdisease_Yes,0.0
+covid_gatherings_No,0.0
+covid_gatherings_Yes,0.0
+covid_processclosed_No,0.0
+crp_proddif_soilerosion_No,0.0
+crp_proddif_nafuelorelect_Yes,0.0
+ls_food_supply_fieldselfprodfod_No,0.0
+ls_num_dec_soldmoredistsale_Yes,0.0
+"income_sec_Non-agricultural self-employed or liberal profession, doctor, architect, lawyer, including restaurant",0.0
+income_sec_Informal agricultural trade excluding producers,0.0
+"income_sec_Farmer, production and sale of vegetable or fruit",0.0
+ls_food_supply_fieldselfprodfod_Yes,0.0
+"income_sec_Income not derived from work, remittances",0.0
+"income_sec_Income not derived from work, income from other rents",0.0
+income_sec_Formal agricultural trade excluding producers,0.0
+"income_sec_Income not derived from work, welfare transfer, pension, humanitarian aid",0.0
+income_main_Refused,0.0
+income_main_comp_Don't know,0.0
+ls_num_dec_soldmoregoodprice_Yes,0.0
+"income_sec_Farmer, production and sale of fish",0.0
+crp_saledif_dif_processing_Yes,0.0
+"income_third_Farmer, production and sale of cashcrops",0.0
+"income_third_Farmer, production and sale of fish",0.0
+"income_third_Farmer, production and sale of staple crops",0.0
+income_sec_Stable employment in non-agricultural sector,0.0
+crp_saledif_lowprice_No,0.0
+ls_main_Refused,0.0
+ls_main_Don't know,0.0
+ls_main_Sheeps,0.0
+"ls_main_Small domesticated mammals (rabbits, minks, guinea pigs, etc)",0.0
+ls_num_inc_purchbarterdmore_No,0.0
+ls_num_inc_didnotsellasmany_Yes,0.0
+ls_num_inc_purchbarterdmore_Yes,0.0
+ls_num_inc_receivedfree_Yes,0.0
+income_sec_Don't know,0.0
+income_sec_Stable employment in agricultural sector,0.0
+ls_proddif_difaccessvetinp_Yes,0.0
+hh_wealth_water_Spring water,0.0
+hh_wealth_water_Canal or other surface water,0.0
+hh_wealth_water_Bottled water,0.0
+"ls_salesmain_Small domesticated mammals (rabbits, minks, guinea pigs, etc)",0.0
+ls_proddif_noaccesstocredit_Yes,0.0
+ls_salesmain_Eggs,0.0
+ls_salesmain_Goats,0.0
+ls_proddif_noaccesstocredit_No,0.0
+ls_proddif_lackoflabour_Yes,0.0
+income_main_Collection and sale of forestry or bush products,0.0
+ls_proddif_pooraccesstolmarket_No,0.0
+hh_residencetype_Internally displaced person (IDP) - you were forced to flee your village or town because of conflict or natural disaster and you are now an internally displaced person in your current place of residence,0.0
+"income_main_Farmer, production and sale of fish",0.0
+hh_maritalstat_Divorced,0.0
+hh_maritalstat_Don’t know,0.0
+hh_wealth_water_Unprotected well,0.0
+hh_gender_Don't know,0.0
+ls_salesdif_slaughterhouse_No,0.0
+resp_gender_Refused,0.0
+resp_gender_Don't know,0.0
+ls_salesdif_lowdemand_Yes,0.0
+need_acstomechanisedequipprod_Yes,0.0
+ls_salesprice_A lot more (increased by more than 50%),0.0
+ls_salesprice_Don't know,0.0
+ls_salesdif_slaughterhouse_Yes,0.0
+ls_salesdif_processing_No,0.0
+need_pesticides_Yes,0.0
+need_landrehabilitation_No,0.0
+need_fishequiorothersuppforfish_Yes,0.0
+need_infoonsafetymeasures_No,0.0
+need_infoonsafetymeasures_Yes,0.0

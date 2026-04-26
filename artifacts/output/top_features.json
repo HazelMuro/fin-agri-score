@@ -1,0 +1,19 @@
+{
+  "top_features": [
+    "need_Yes",
+    "income_main_amount",
+    "tot_income",
+    "crp_proddif_count",
+    "shock_count",
+    "resp_age",
+    "hh_education_Completed higher education (university, college) degree",
+    "shock_economic_count",
+    "income_quintile_adm1",
+    "income_main_comp_A lot less (less than half as much)",
+    "regional_yield_mean",
+    "covid_disruption_count",
+    "hh_size",
+    "ls_num_now",
+    "hh_agricactivity_Yes - both crop and livestock production"
+  ]
+}

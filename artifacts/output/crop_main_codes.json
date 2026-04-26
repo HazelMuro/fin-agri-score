@@ -1,0 +1,4 @@
+{
+  "_documentation": "Training column crp_main is numeric (see model_metadata.json numeric_features). Maize=1500 matches values used in sample_shap_explanations.json. Add other crops after running value_counts() on your training set on crp_main — do not guess codes for production.",
+  "Maize": 1500
+}
