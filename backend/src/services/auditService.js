@@ -1,3 +1,7 @@
+/**
+ * Fire-and-forget audit trail writes (scoring, env autofill, etc.) — failures logged to console only.
+ */
+
 const prisma = require('../config/prisma');
 
 async function log({ applicationId = null, userId = null, action, details = null }) {

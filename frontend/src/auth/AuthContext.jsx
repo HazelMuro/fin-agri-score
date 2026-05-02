@@ -1,3 +1,7 @@
+/**
+ * Session bootstrap via GET /auth/me: JWT mode vs backend “auth disabled” vs network fallback for demo UX.
+ */
+
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import api from '../services/api';
 import { clearAccessToken } from './authStorage';
@@ -12,14 +16,9 @@ export function AuthProvider({ children }) {
   const refreshUser = useCallback(async () => {
     try {
       const { data } = await api.get('/auth/me');
-      if (data?.auth === 'disabled') {
-        setAuthDisabled(true);
-        setUser({ username: 'Loan officer', role: 'LOAN_OFFICER' });
-        return;
-      }
       setAuthDisabled(false);
       setUser(data?.user || null);
-    } catch {
+    } catch (err) {
       clearAccessToken();
       setAuthDisabled(false);
       setUser(null);
@@ -32,6 +31,7 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(() => {
     clearAccessToken();
+    localStorage.removeItem('finagri_mock_login');
     setUser(null);
     setAuthDisabled(false);
     window.location.assign('/login');

@@ -1,3 +1,7 @@
+/**
+ * Lists Zimbabwe district profiles for dropdowns / env resolution (province filter optional).
+ */
+
 const prisma = require('../config/prisma');
 
 async function list(req, res) {

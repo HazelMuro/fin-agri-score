@@ -1,3 +1,7 @@
+/**
+ * Autofill / environmental endpoints used by the scoring flow (NASA POWER + satellite row persistence).
+ */
+
 const environmentService = require('../services/environmentService');
 const auditService = require('../services/auditService');
 

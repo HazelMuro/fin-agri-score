@@ -1,4 +1,13 @@
 {
-  "_documentation": "Training column crp_main is numeric (see model_metadata.json numeric_features). Maize=1500 matches values used in sample_shap_explanations.json. Add other crops after running value_counts() on your training set on crp_main — do not guess codes for production.",
-  "Maize": 1500
+  "_documentation": "Training column crp_main is numeric (DIEM-style product codes). Maize=1500 matches sample_shap_explanations.json. Other codes are spaced demo mappings aligned with FarmActivityForm crop labels — reconcile against your training crp_main value_counts before production scoring.",
+  "Maize": 1500,
+  "Tobacco": 1510,
+  "Groundnuts": 1520,
+  "Cotton": 1530,
+  "Soya Bean": 1540,
+  "Sorghum": 1550,
+  "Millet": 1560,
+  "Wheat": 1570,
+  "Horticulture": 1580,
+  "Other": 1599
 }

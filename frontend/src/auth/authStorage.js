@@ -1,3 +1,7 @@
+/**
+ * Persists JWT access token in localStorage under a fixed key (when JWT auth is enabled).
+ */
+
 const KEY = 'finagri_access_token';
 
 export function getAccessToken() {

@@ -1,3 +1,7 @@
+/**
+ * REST routes for /api/applications — Zod-validated create; list/get/update handlers in controller.
+ */
+
 const { Router } = require('express');
 const { z } = require('zod');
 const { validate } = require('../middleware/validate');

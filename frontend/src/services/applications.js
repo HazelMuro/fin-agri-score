@@ -1,3 +1,7 @@
+/**
+ * Thin wrappers for /api/applications (list, detail, create, status patch).
+ */
+
 import api from './api';
 
 export const listApplications = (params = {}) =>

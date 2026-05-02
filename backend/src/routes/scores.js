@@ -1,3 +1,7 @@
+/**
+ * Mounted under /api: POST …/applications/:id/score and GET …/scores (list & detail).
+ */
+
 const { Router } = require('express');
 const c = require('../controllers/scoresController');
 

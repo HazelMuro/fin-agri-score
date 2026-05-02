@@ -4,6 +4,111 @@
  */
 
 import { number } from '../utils/format';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Cell,
+} from 'recharts';
+
+const SHORT_LABELS = {
+  income_main_amount: 'Primary Income Level',
+  income_main: 'Primary Income Source',
+  income_diversity: 'Income Diversity',
+  has_sec_income: 'Secondary Income',
+  income_sec_amount: 'Secondary Income Level',
+  tot_income: 'Total Household Income',
+  income_source_count: 'Number of Income Sources',
+  income_primary_share: 'Income Concentration',
+  hh_education: 'Household Education',
+  hh_gender: 'Head of Household Gender',
+  hh_size: 'Household Size',
+  resp_age: 'Applicant Age',
+  resp_gender: 'Applicant Gender',
+  crp_main: 'Primary Crop Type',
+  crp_landsize: 'Farm Scale (Hectares)',
+  crp_irrigation: 'Irrigation Access',
+  crp_proddif: 'Production Stability',
+  shock_noshock: 'Recent Shock Events',
+  hdds_score: 'Dietary Diversity (Liquidity)',
+  lcsi: 'Coping Strategies (Stress)',
+  chirps_rain_30d_mm: 'Short-term Rainfall',
+  chirps_rain_90d_mm: 'Seasonal Rainfall',
+  modis_ndvi_90d_mean: 'Seasonal Crop Health',
+  modis_ndvi_90d_std: 'Vegetation Stability',
+  environment_score: 'Composite Agro-Risk',
+  environment_risk: 'Environmental Risk Band',
+  need_loans: 'Loan Requirement Profile',
+  ls_num_now: 'Livestock Asset Base',
+};
+
+function SHAPBarChart({ factors }) {
+  const data = factors
+    .map((f) => {
+      const short = SHORT_LABELS[f.feature];
+      return {
+        name: f.label || short || naturalLabel(f.feature),
+        value: f.impact || (f.direction === 'increases_risk' ? 1 : -1) * Math.abs(f.value || 1),
+        direction: f.direction,
+      };
+    })
+    .sort((a, b) => Math.abs(b.value) - Math.abs(a.value))
+    .slice(0, 8);
+
+  return (
+    <div style={{ height: 320, width: '100%', marginTop: 24 }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart 
+          data={data} 
+          layout="vertical" 
+          margin={{ left: 20, right: 40, top: 0, bottom: 0 }}
+        >
+          <XAxis type="number" hide />
+          <YAxis
+            dataKey="name"
+            type="category"
+            tick={{ fontSize: 11, fill: 'var(--color-navy)', fontWeight: 500 }}
+            width={140}
+            axisLine={false}
+            tickLine={false}
+          />
+          <Tooltip
+            cursor={{ fill: 'rgba(0,0,0,0.03)' }}
+            content={({ active, payload }) => {
+              if (active && payload && payload.length) {
+                const d = payload[0].payload;
+                const isRisk = d.direction === 'increases_risk';
+                return (
+                  <div className="card shadow-lg" style={{ padding: '10px 14px', fontSize: 12, border: 'none' }}>
+                    <div style={{ fontWeight: 700, marginBottom: 4 }}>{d.name}</div>
+                    <div style={{ 
+                      color: isRisk ? 'var(--color-risk-high)' : 'var(--color-risk-low)',
+                      fontWeight: 600
+                    }}>
+                      {isRisk ? '↑ Increases Risk' : '↓ Reduces Risk'}
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            }}
+          />
+          <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={24}>
+            {data.map((entry, index) => (
+              <Cell
+                key={`cell-${index}`}
+                fill={entry.direction === 'increases_risk' ? 'var(--color-navy)' : 'var(--color-primary-300)'}
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
 
 /** Exact feature key → { high: copy when reduces risk, low: copy when increases risk } */
 const PLAIN_TEMPLATES = {
@@ -258,20 +363,16 @@ export default function ExplanationPanel({
   satellite = null,
   emptyLabel = 'No driver list was returned for this run. Class probabilities in the card above still apply.',
 }) {
-  const reducing = factors.filter((f) => f.direction === 'reduces_risk').slice(0, 5);
-  const increasing = factors.filter((f) => f.direction === 'increases_risk').slice(0, 5);
-  const neutral = factors.filter((f) => !f.direction || f.direction === 'neutral').slice(0, 5);
-  const hasDir = reducing.length + increasing.length > 0;
   const src = sourceBadge(satellite);
 
   return (
     <div className="card explanation-panel">
       <div className="explanation-section">
-        <h3 className="explanation-h">Why this result?</h3>
+        <h3 className="explanation-h">SHAP Explanation</h3>
         <p className="explanation-lead text-muted text-sm" style={{ margin: '0 0 var(--space-2)' }}>
-          <strong>At a glance:</strong> the Fin-Agri score in the card above comes from a three-way credit-risk model
-          (LOW / MEDIUM / HIGH). The lists below name what most pushed this case toward a cautious read vs. a stronger
-          read — in language suitable for supervisors and field officers.
+          This chart shows the top factors that influenced the Fin-Agri Score. 
+          <strong> Dark bars</strong> pushed the score toward higher risk, while 
+          <strong> light bars</strong> pushed it toward lower risk.
         </p>
       </div>
 
@@ -279,70 +380,10 @@ export default function ExplanationPanel({
         <p className="text-muted text-sm" style={{ margin: 0 }}>{emptyLabel}</p>
       )}
 
-      {!!factors.length && hasDir && (
-        <div className="explain-cols explain-cols--framed">
-          <div className="explain-col increases">
-            <div className="explain-col__head">
-              <span className="factor-pill factor-pill--risk">Main risk drivers</span>
-              <p className="explain-col__sub">What pushed the case toward a more cautious read</p>
-            </div>
-            {increasing.length === 0 ? (
-              <p className="text-muted text-sm" style={{ margin: 0 }}>No single factor stands out on the “more risk” side — check class probabilities for detail.</p>
-            ) : (
-              <ul className="factor-list">
-                {increasing.map((f, i) => (
-                  <li key={`i-${i}`} className="factor-list__item">
-                    <div className="factor-list__title">{f.label || naturalLabel(f.feature)}</div>
-                    <div className="factor-list__val text-muted">Recorded value · {formatValue(f.value)}</div>
-                    <p className="factor-list__desc">
-                      {plainLine(f.feature, 'increases_risk') || fallbackLine(f, 'increases_risk')}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          <div className="explain-col reduces">
-            <div className="explain-col__head">
-              <span className="factor-pill factor-pill--ok">Positive indicators</span>
-              <p className="explain-col__sub">What supported a stronger (lower-risk) read</p>
-            </div>
-            {reducing.length === 0 ? (
-              <p className="text-muted text-sm" style={{ margin: 0 }}>No strong “helping” signal on this list — the case may be borderline. Review income and environment.</p>
-            ) : (
-              <ul className="factor-list">
-                {reducing.map((f, i) => (
-                  <li key={`r-${i}`} className="factor-list__item">
-                    <div className="factor-list__title">{f.label || naturalLabel(f.feature)}</div>
-                    <div className="factor-list__val text-muted">Recorded value · {formatValue(f.value)}</div>
-                    <p className="factor-list__desc">
-                      {plainLine(f.feature, 'reduces_risk') || fallbackLine(f, 'reduces_risk')}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
+      {!!factors.length && (
+        <SHAPBarChart factors={factors} />
       )}
 
-      {!!factors.length && !hasDir && neutral.length > 0 && (
-        <div className="explanation-neutral-block">
-          <span className="factor-pill factor-pill--neutral">Top signals (importance)</span>
-          <ul className="factor-list">
-            {neutral.map((f, i) => (
-              <li key={i} className="factor-list__item">
-                <div className="factor-list__title">{f.label || naturalLabel(f.feature)}</div>
-                <div className="factor-list__val text-muted">Value · {formatValue(f.value)}</div>
-                <p className="factor-list__desc">
-                  {plainLine(f.feature, 'neutral') || fallbackLine(f, 'neutral')}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
 
       {satellite && (satellite.rainfall90dMm != null || satellite.ndvi90dMean != null || satellite.environmentRisk) && (
         <div className="explanation-env">

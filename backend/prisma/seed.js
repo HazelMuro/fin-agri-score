@@ -1,7 +1,8 @@
 /**
  * Seed script — creates demo users, Zimbabwe district reference table, and a set of
- * farmers with complete assessment data so the dashboard is alive on first run and
- * scoring produces a realistic spread of Low / Medium / High risk.
+ * farmers with complete assessment data so the dashboard is alive on first run.
+ * Six extra farmers are seeded via risk-band presets (two per Low / Medium / High) with
+ * band-tuned environmental autofill rows.
  *
  * Run with:
  *   npm run seed
@@ -10,6 +11,7 @@
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const { DISTRICTS } = require('../src/data/zimbabweDistricts');
+const mediumBandPresets = require('./mediumBandPresets');
 
 const prisma = new PrismaClient();
 
@@ -197,6 +199,17 @@ async function seedFarmers() {
   }
 }
 
+async function seedMediumBandDemosWrapped() {
+  const r = await mediumBandPresets.seedMediumBandDemos(prisma);
+  let extra = '';
+  if (r.inserted > 0 && r.liveScored != null) {
+    extra = ` (${r.liveScored} live inference, ${r.presetFallback} preset fallback)`;
+  }
+  console.log(
+    `  ✓ Risk-band presets (2× Low / Medium / High): ${r.inserted} inserted, ${r.skipped} skipped (already present)${extra}`
+  );
+}
+
 async function main() {
   console.log('Seeding Fin-Agri Score demo data…');
   await seedUsers();
@@ -204,6 +217,7 @@ async function main() {
   console.log(`  ✓ Seeded ${DISTRICTS.length} Zimbabwe district profiles`);
   await seedFarmers();
   console.log(`  ✓ Seeded ${DEMO_FARMERS.length} farmers with complete assessment data`);
+  await seedMediumBandDemosWrapped();
   console.log('Done.');
 }
 

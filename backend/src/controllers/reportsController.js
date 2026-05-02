@@ -1,3 +1,7 @@
+/**
+ * CSV exports + PDF portfolio/application/farmer summaries; some endpoints gated by readiness where noted.
+ */
+
 const prisma = require('../config/prisma');
 const readinessService = require('../services/readinessService');
 const reportPdfService = require('../services/reportPdfService');

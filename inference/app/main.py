@@ -125,7 +125,23 @@ def predict(req: PredictRequest) -> PredictResponse:
         raise HTTPException(status_code=500, detail=f"Model prediction failed: {e}")
 
     classes = list(model.label_encoder.classes_)
-    class_probabilities = {str(cls): float(p) for cls, p in zip(classes, proba)}
+    raw_probs = {str(cls): float(p) for cls, p in zip(classes, proba)}
+
+    blend_applied = False
+    class_probabilities = raw_probs
+    if req.previous_class_probabilities is not None and req.minor_blend_alpha is not None:
+        alpha = float(req.minor_blend_alpha)
+        alpha = max(0.0, min(1.0, alpha))
+        if alpha > 0.0:
+            blended: Dict[str, float] = {}
+            for cls in classes:
+                key = str(cls)
+                prev_p = float(req.previous_class_probabilities.get(key, 0.0))
+                blended[key] = alpha * prev_p + (1.0 - alpha) * raw_probs[key]
+            total = sum(blended.values())
+            if total > 0.0:
+                class_probabilities = {k: v / total for k, v in blended.items()}
+            blend_applied = True
 
     predicted_label, p_low = decide_predicted_label(
         class_probabilities, model.low_class_threshold
@@ -171,6 +187,7 @@ def predict(req: PredictRequest) -> PredictResponse:
         threshold_used=model.low_class_threshold,
         imputed_features=imputed_features,
         feature_coverage=feature_coverage,
+        probability_blend_applied=blend_applied,
     )
 
 

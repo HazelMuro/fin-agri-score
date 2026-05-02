@@ -1,3 +1,7 @@
+/**
+ * Attach req.user on every protected route. Open demo: no JWT_SECRET → synthetic LOAN_OFFICER user.
+ */
+
 const { verifyAccessToken } = require('../utils/jwt');
 
 /**

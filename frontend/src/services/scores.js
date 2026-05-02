@@ -1,3 +1,7 @@
+/**
+ * POST /api/applications/:id/score and GET /api/scores (list/detail).
+ */
+
 import api from './api';
 
 export const scoreApplication = (

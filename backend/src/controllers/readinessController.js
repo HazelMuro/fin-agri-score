@@ -1,3 +1,7 @@
+/**
+ * Thin handlers delegating to readinessService + combined “hub” payload for scoring UI steps.
+ */
+
 const prisma = require('../config/prisma');
 const readinessService = require('../services/readinessService');
 

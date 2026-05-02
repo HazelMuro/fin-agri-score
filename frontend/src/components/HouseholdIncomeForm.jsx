@@ -115,18 +115,23 @@ export default function HouseholdIncomeForm({ farmerId, initial = {}, onSaved, s
               <option>No</option>
               <option>Yes</option>
             </select>
-            <div className="field-hint">Drought, pest outbreak, illness, job loss etc. in the last 6 months.</div>
+            <div className="field-hint">
+              Drought, pest outbreak, illness, job loss etc. in the last 6 months. Switching this to “Yes” feeds straight into the model’s shock indicators and usually raises credit risk materially compared with “No.” Accurate reporting matters — do not treat this as a minor tweak.
+            </div>
           </div>
           <div className="field">
             <label className="field-label">Coping strategy index (1–4)</label>
             <select className="select" value={form.copingIndex} onChange={set('copingIndex')}>
               {COPING_LEVELS.map((c) => <option key={c.v} value={c.v}>{c.label}</option>)}
             </select>
+            <div className="field-hint">Livelihood stress level from the Coping Strategies Index.</div>
           </div>
           <div className="field">
             <label className="field-label">Dietary diversity (0–12)</label>
             <input className="input" type="number" min="0" max="12" value={form.dietaryDiversity} onChange={set('dietaryDiversity')} />
-            <div className="field-hint">How many food groups the household consumed in the last 24 hours.</div>
+            <div className="field-hint">
+              Food groups consumed in the last 24 hours (HDDS-style). In this deployment the dietary figure is mainly for the file summary — it is not yet wired into the live sklearn feature list the same way as shocks and income, so on its own it should not swing the score.
+            </div>
           </div>
         </div>
       </div>

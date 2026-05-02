@@ -1,5 +1,5 @@
 /**
- * Presents the model outcome in committee-friendly language.
+ * Presents the model outcome in committee-friendly language (named farmer when provided).
  * Does not change model behaviour — display layer only.
  */
 
@@ -10,10 +10,19 @@ function label(f) {
 
 /**
  * @param {object} prediction - score API payload (or reconstructed from DB row)
- * @returns {{ decision: string, why: string, riskDrivers: string[], strengths: string[], nextSteps: string[] }}
+ * @param {{ farmerName?: string, loanPurpose?: string }} [context]
+ * @returns {object} Narrative fields for ScoreCard / committee view
  */
-export function buildLendingNarrative(prediction) {
+export function buildLendingNarrative(prediction, context = {}) {
+  const farmerLabel = String(context.farmerName || '').trim() || 'This applicant';
+  const loanPurpose = String(context.loanPurpose || '').trim();
+  const purposePhrase = loanPurpose ? ` for “${loanPurpose}”` : '';
+
   const band = String(prediction?.risk_band || '').trim();
+  const scoreVal = prediction?.fin_agri_score;
+  const scoreBit =
+    scoreVal != null && Number.isFinite(Number(scoreVal)) ? ` (Fin‑Agri Score ${Math.round(Number(scoreVal))})` : '';
+
   const factors = Array.isArray(prediction?.top_factors) ? prediction.top_factors : [];
   const increasing = factors
     .filter((f) => f.direction === 'increases_risk')
@@ -35,9 +44,10 @@ export function buildLendingNarrative(prediction) {
     decision = 'High risk on this model — we would not put this on standard terms without extra structure or a manual review.';
   }
 
-  const riskDrivers = increasing.length
-    ? increasing
-    : ['(See “Why this score” for the main drivers the model is reacting to.)'];
+  const riskDriversFallback =
+    increasing.length > 0
+      ? increasing
+      : ['(Add more verified fields if drivers look thin — the model is reacting to the overall pattern.)'];
 
   let why = '';
   if (band === 'High') {
@@ -70,11 +80,53 @@ export function buildLendingNarrative(prediction) {
             'Strengthen the file (income, group support, season outlook) and re-apply when realistic.',
           ];
 
+  /** Short headline shown at top of score card — names the farmer when known */
+  let headline = '';
+  if (band === 'Low') {
+    headline = `${farmerLabel}${purposePhrase}${scoreBit}: lower model risk — favourable for standard processing subject to policy.`;
+  } else if (band === 'Medium') {
+    headline = `${farmerLabel}${purposePhrase}${scoreBit}: medium model risk — do not close on vanilla terms without mitigants.`;
+  } else {
+    headline = `${farmerLabel}${purposePhrase}${scoreBit}: high model risk — we would not recommend standard unsecured terms without manual review or decline.`;
+  }
+
+  /** Long-form “because” tying name + drivers */
+  const nameBit =
+    farmerLabel === 'This applicant' ? 'This applicant’s loan application' : `${farmerLabel}’s loan application`;
+
+  let personalizedExplanation = '';
+  if (band === 'High') {
+    personalizedExplanation = increasing.length
+      ? `For ${nameBit}${purposePhrase}, we would argue against standard unsecured approval because the clearest upward-risk drivers are: ${increasing.join('; ')}.`
+      : `For ${nameBit}${purposePhrase}, several inputs combine into a stressed profile — treat as decline or structured referral unless mitigated.`;
+    if (reducing.length) {
+      personalizedExplanation += ` Factors that partly offset risk: ${reducing.join('; ')}.`;
+    }
+  } else if (band === 'Medium') {
+    personalizedExplanation = increasing.length
+      ? `${farmerLabel === 'This applicant' ? 'This applicant’s case' : `${farmerLabel}’s case`} sits in the “review carefully” band${purposePhrase}: notable pressure from ${increasing.join('; ')}.`
+      : `${farmerLabel === 'This applicant' ? 'This applicant’s profile' : `${farmerLabel}’s profile`} mixes supportive and cautious signals — typical of conditional approval work${purposePhrase}.`;
+    if (reducing.length) {
+      personalizedExplanation += ` Supporting angles include: ${reducing.join('; ')}.`;
+    }
+  } else {
+    personalizedExplanation = reducing.length
+      ? `${farmerLabel === 'This applicant' ? 'This applicant’s file' : `${farmerLabel}’s file`} compares favourably on: ${reducing.join('; ')}${purposePhrase}.`
+      : `${farmerLabel === 'This applicant' ? 'This applicant’s overall pattern' : `${farmerLabel}’s overall pattern`} aligns more closely with lower model risk than with severe stress${purposePhrase}, pending policy checks.`;
+  }
+
+  const backendRec = String(prediction?.recommendation || '').trim();
+
   return {
+    farmerLabel,
+    headline,
+    personalizedExplanation: personalizedExplanation.replace(/\s+/g, ' ').trim(),
     decision,
     why: why.replace(/\s+/g, ' ').trim(),
-    riskDrivers: increasing.length ? increasing : riskDrivers,
+    riskDrivers: increasing.length ? increasing : riskDriversFallback,
     strengths: reducing,
     nextSteps,
+    /** Official model wording from inference — shown prominently */
+    backendRecommendation: backendRec || null,
   };
 }

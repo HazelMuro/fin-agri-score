@@ -1,3 +1,7 @@
+/**
+ * Loan applications: list/filter, get detail, create, status updates. Audit log on create/status change.
+ */
+
 const prisma = require('../config/prisma');
 const auditService = require('../services/auditService');
 
@@ -10,7 +14,7 @@ async function list(req, res) {
   const [items, total] = await Promise.all([
     prisma.loanApplication.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { updatedAt: 'desc' },
       take: Number(take),
       skip: Number(skip),
       include: {

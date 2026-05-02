@@ -1,3 +1,8 @@
+/**
+ * HTTP entrypoint only: loads Express app from ./app and listens on PORT (default 4000).
+ * Production safety: refuses to boot without JWT_SECRET when NODE_ENV === 'production'.
+ */
+
 const app = require('./app');
 const env = require('./config/env');
 

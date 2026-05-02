@@ -1,3 +1,8 @@
+/**
+ * Shell layout: sidebar navigation, branding, signed-in footer, mobile drawer trigger, theme toggle.
+ * Child routes render in <Outlet /> inside main content.
+ */
+
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useMemo, useState } from 'react';
 import { useAuth } from '../auth/AuthContext';
@@ -16,7 +21,7 @@ const NAV = [
   { to: '/farmers', label: 'Farmers', Icon: IconFarmers },
   { to: '/applications', label: 'Applications', Icon: IconApplications },
   { to: '/score', label: 'Score application', Icon: IconScore },
-  { to: '/history', label: 'Score history', Icon: IconHistory },
+  { to: '/history', label: 'History', Icon: IconHistory },
   { to: '/reports', label: 'Reports', Icon: IconReports },
 ];
 
@@ -27,10 +32,10 @@ function topbarForPath(pathname) {
   if (pathname === '/applications/new') return { kicker: 'Applications', title: 'New application' };
   if (pathname === '/applications') return { kicker: 'Applications', title: 'Loan applications' };
   if (pathname.startsWith('/applications/')) return { kicker: 'Applications', title: 'Application' };
-  if (pathname === '/score') return { kicker: 'Scoring', title: 'Assessment & score' };
-  if (pathname === '/history') return { kicker: 'History', title: 'Score history' };
-  if (pathname === '/reports') return { kicker: 'Exports', title: 'Reports & downloads' };
-  return { kicker: 'Fin-Agri Score', title: 'Workspace' };
+  if (pathname === '/score') return { kicker: 'Risk Model', title: 'Fin-Agri Assessment' };
+  if (pathname === '/history') return { kicker: 'Audit Trail', title: 'Assessment History' };
+  if (pathname === '/reports') return { kicker: 'Intelligence', title: 'Reports & Exports' };
+  return { kicker: 'Fin-Agri Score', title: 'Portfolio Management' };
 }
 
 export default function AppLayout() {
@@ -80,12 +85,8 @@ export default function AppLayout() {
         <div className="sidebar-footer">
           <div className="sf-role">Signed in as</div>
           <div className="sf-name">{displayName}</div>
-          <div className="sf-sub">{authDisabled ? 'Open API (dev)' : 'Field workspace'}</div>
-          {!authDisabled && (
-            <button type="button" className="btn btn-ghost btn-sm" style={{ marginTop: 10, width: '100%' }} onClick={logout}>
-              Sign out
-            </button>
-          )}
+          <div className="sf-sub">{authDisabled ? 'Enterprise Workspace' : 'Authenticated Session'}</div>
+          {/* Removed sign out button from here */}
         </div>
       </aside>
 
@@ -108,6 +109,7 @@ export default function AppLayout() {
             </div>
           </div>
           <div className="flex gap-2 items-center">
+            <button type="button" className="btn btn-ghost btn-sm" onClick={logout}>Logout</button>
             <ThemeToggle compact />
           </div>
         </header>

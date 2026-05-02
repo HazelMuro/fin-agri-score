@@ -21,6 +21,7 @@ export default function ApplicationForm({ onSubmit, submitting, defaultFarmerId,
     amountRequested: '',
     purpose: '',
     season: '2025/2026',
+    caseNotes: '',
   });
 
   useEffect(() => {
@@ -33,10 +34,12 @@ export default function ApplicationForm({ onSubmit, submitting, defaultFarmerId,
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const notes = form.caseNotes.trim();
+    const purpose = notes ? `${form.purpose}\n\nCase notes: ${notes}` : form.purpose;
     onSubmit({
       farmerId: form.farmerId,
       amountRequested: Number(form.amountRequested),
-      purpose: form.purpose,
+      purpose,
       season: form.season,
     });
   };
@@ -95,6 +98,16 @@ export default function ApplicationForm({ onSubmit, submitting, defaultFarmerId,
             <div className="field-hint">
               This is what the money will be used for. It also helps frame the scoring context.
             </div>
+          </div>
+          <div className="field field-full">
+            <label className="field-label">Case notes</label>
+            <textarea 
+              className="input" 
+              value={form.caseNotes} 
+              onChange={set('caseNotes')} 
+              placeholder="Any additional information or context for this application..."
+              rows={3}
+            />
           </div>
         </div>
       </div>

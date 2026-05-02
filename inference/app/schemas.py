@@ -66,6 +66,19 @@ class PredictRequest(BaseModel):
         ),
     )
     application_id: Optional[str] = Field(None, description="Optional correlation id for logs")
+    previous_class_probabilities: Optional[Dict[str, float]] = Field(
+        None,
+        description=(
+            "When set with minor_blend_alpha, blend raw predict_proba with these "
+            "class probabilities (e.g. previous score on file) before label/score."
+        ),
+    )
+    minor_blend_alpha: Optional[float] = Field(
+        None,
+        description="Blend weight on previous_class_probabilities; new raw mass gets (1 - alpha).",
+        ge=0.0,
+        le=1.0,
+    )
 
 
 class TopFactor(BaseModel):
@@ -95,3 +108,4 @@ class PredictResponse(BaseModel):
     threshold_used: float
     imputed_features: List[str] = Field(default_factory=list)
     feature_coverage: float = 0.0
+    probability_blend_applied: bool = False

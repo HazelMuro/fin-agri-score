@@ -1,3 +1,7 @@
+/**
+ * pdfkit helpers: portfolio PDF and per-application / per-farmer summary downloads (reportsController).
+ */
+
 const PDFDocument = require('pdfkit');
 
 const PAGE_MARGIN = 48;

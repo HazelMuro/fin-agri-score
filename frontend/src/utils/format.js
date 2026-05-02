@@ -61,7 +61,7 @@ export const riskClass = (band) => {
   if (!band) return '';
   const b = String(band).toLowerCase();
   if (b.startsWith('low')) return 'badge-low';
-  if (b.startsWith('med')) return 'badge-medium';
-  if (b.startsWith('high')) return 'badge-high';
+  if (b.startsWith('med') || b.startsWith('mod')) return 'badge-medium';
+  if (b.startsWith('high') || b.startsWith('very')) return 'badge-high';
   return '';
 };

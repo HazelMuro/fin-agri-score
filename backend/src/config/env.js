@@ -1,3 +1,8 @@
+/**
+ * Normalised environment variables for the API (database, JWT, inference URL, score band thresholds).
+ * Loaded once; keep secrets in .env only (never commit real .env).
+ */
+
 require('dotenv').config();
 
 const env = {

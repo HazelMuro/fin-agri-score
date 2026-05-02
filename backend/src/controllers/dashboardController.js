@@ -1,3 +1,8 @@
+/**
+ * Dashboard aggregates: portfolio counts, risk distribution, recent applications, monthly trends,
+ * score-history snippet. Shared payload builder used by GET /api/dashboard/overview.
+ */
+
 const prisma = require('../config/prisma');
 
 function toMonthKey(d) {
@@ -56,8 +61,8 @@ async function getOverviewPayload() {
     prisma.creditScore.count({ where: { riskBand: 'Medium' } }),
     prisma.creditScore.count({ where: { riskBand: 'High' } }),
     prisma.loanApplication.findMany({
-      take: 8,
-      orderBy: { createdAt: 'desc' },
+      take: 30,
+      orderBy: { updatedAt: 'desc' },
       include: {
         farmer: { select: { id: true, fullName: true, district: true } },
         creditScores: { orderBy: { createdAt: 'desc' }, take: 1 },

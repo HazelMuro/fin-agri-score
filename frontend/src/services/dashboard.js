@@ -1,3 +1,7 @@
+/**
+ * Dashboard overview payload + score-history snippet for charts/tables.
+ */
+
 import api from './api';
 
 export const getOverview = () =>

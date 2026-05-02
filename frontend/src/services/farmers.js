@@ -1,3 +1,7 @@
+/**
+ * Thin wrappers for GET/POST/PATCH/DELETE /api/farmers.
+ */
+
 import api from './api';
 
 export const listFarmers = (params = {}) =>

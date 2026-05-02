@@ -1,4 +1,9 @@
+/**
+ * Farmers CRUD: list/search, get one with related data, create (duplicate checks), update, delete.
+ */
+
 const prisma = require('../config/prisma');
+const environmentService = require('../services/environmentService');
 
 function normalizePhone(value = '') {
   return String(value).replace(/\D/g, '');
@@ -112,4 +117,19 @@ async function remove(req, res) {
   res.status(204).end();
 }
 
-module.exports = { list, getOne, create, update, remove };
+async function getEnvironmentPreview(req, res) {
+  const farmer = await prisma.farmer.findUnique({
+    where: { id: req.params.id },
+  });
+  if (!farmer) return res.status(404).json({ error: { message: 'Farmer not found' } });
+
+  const resolved = await environmentService.resolveEnvironmentalData({
+    province: farmer.province,
+    district: farmer.district,
+    applicationId: `preview-${farmer.id.slice(0, 8)}`,
+  });
+
+  res.json(resolved);
+}
+
+module.exports = { list, getOne, create, update, remove, getEnvironmentPreview };

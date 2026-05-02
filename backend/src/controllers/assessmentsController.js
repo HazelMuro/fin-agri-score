@@ -1,3 +1,7 @@
+/**
+ * Alternative scoring entry shape (legacy assessment payload → same scoringService pipeline).
+ */
+
 const { z } = require('zod');
 const prisma = require('../config/prisma');
 const scoringService = require('../services/scoringService');
@@ -57,6 +61,13 @@ async function scoreAssessment(req, res) {
       scored_at: result.score?.createdAt || null,
       reused: !!result.reused,
       reused_age_sec: result.reusedAgeSec || null,
+      reused_reason: result.reusedReason || null,
+      minor_blend_applied: !!result.minorBlendApplied,
+      minor_blend_fields: result.minorBlendFields || null,
+      feature_coverage: result.featureCoverage ?? null,
+      mappable_coverage: result.mappableCoverage ?? null,
+      mappable_filled: result.mappableFilled ?? null,
+      mappable_total: result.mappableTotal ?? null,
     });
   } catch (err) {
     if (err.code === 'READINESS_GATE') {

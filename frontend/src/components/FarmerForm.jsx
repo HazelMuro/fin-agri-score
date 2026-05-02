@@ -17,6 +17,30 @@ const ZW_PROVINCES = [
 const EDUCATION_LEVELS = ['None', 'Primary', 'Secondary', 'A-Level', 'Tertiary', 'University'];
 const MARITAL_STATUS = ['Single', 'Married', 'Widowed', 'Divorced'];
 
+const PRIMARY_CROPS = [
+  'Maize',
+  'Tobacco',
+  'Cotton',
+  'Groundnuts',
+  'Sugar beans',
+  'Sorghum',
+  'Small grains',
+  'Horticulture',
+  'Mixed cropping',
+  'Livestock feed crops',
+  'Other',
+];
+
+function buildWardLine(baseWard, primaryCrop, gpsCoordinates, groupMember) {
+  const parts = [];
+  if (baseWard?.trim()) parts.push(baseWard.trim());
+  if (primaryCrop) parts.push(`Primary crop: ${primaryCrop}`);
+  if (gpsCoordinates?.trim()) parts.push(`GPS: ${gpsCoordinates.trim()}`);
+  if (groupMember === 'Yes') parts.push('Farmer group member: Yes');
+  if (groupMember === 'No') parts.push('Farmer group member: No');
+  return parts.length ? parts.join(' · ') : undefined;
+}
+
 export default function FarmerForm({ onSubmit, submitting }) {
   const [form, setForm] = useState({
     fullName: '',
@@ -31,6 +55,10 @@ export default function FarmerForm({ onSubmit, submitting }) {
     education: '',
     householdSize: '',
     maritalStatus: '',
+    gpsCoordinates: '',
+    primaryCrop: '',
+    groupMember: '',
+    monthlyHouseholdIncome: '',
   });
 
   const [districts, setDistricts] = useState([]);
@@ -45,14 +73,37 @@ export default function FarmerForm({ onSubmit, submitting }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const payload = { ...form };
+    const mergedWard = buildWardLine(form.ward, form.primaryCrop, form.gpsCoordinates, form.groupMember);
+    const payload = {
+      fullName: form.fullName,
+      gender: form.gender,
+      age: form.age,
+      phone: form.phone,
+      nationalId: form.nationalId,
+      province: form.province,
+      district: form.district,
+      ward: mergedWard,
+      farmSizeHa: form.farmSizeHa,
+      education: form.education,
+      householdSize: form.householdSize,
+      maritalStatus: form.maritalStatus,
+    };
     if (payload.age) payload.age = Number(payload.age);
     if (payload.farmSizeHa) payload.farmSizeHa = Number(payload.farmSizeHa);
     if (payload.householdSize) payload.householdSize = Number(payload.householdSize);
     Object.keys(payload).forEach((k) => {
       if (payload[k] === '' || payload[k] == null) delete payload[k];
     });
-    onSubmit(payload);
+
+    const monthlyHouseholdIncome =
+      form.monthlyHouseholdIncome === '' ? undefined : Number(form.monthlyHouseholdIncome);
+
+    onSubmit({
+      ...payload,
+      ...(monthlyHouseholdIncome != null && !Number.isNaN(monthlyHouseholdIncome)
+        ? { monthlyHouseholdIncome }
+        : {}),
+    });
   };
 
   return (
@@ -115,6 +166,39 @@ export default function FarmerForm({ onSubmit, submitting }) {
           <div className="field">
             <label className="field-label">Farm size (ha) *</label>
             <input className="input" type="number" step="0.1" value={form.farmSizeHa} onChange={set('farmSizeHa')} placeholder="e.g. 2.5" required />
+          </div>
+          <div className="field">
+            <label className="field-label">GPS Coordinates</label>
+            <input className="input" value={form.gpsCoordinates} onChange={set('gpsCoordinates')} placeholder="-19.015, 29.158" />
+          </div>
+          <div className="field field-full">
+            <label className="field-label">Primary crop</label>
+            <select className="select" value={form.primaryCrop} onChange={set('primaryCrop')}>
+              <option value="">Select…</option>
+              {PRIMARY_CROPS.map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label className="field-label">Farmer group membership</label>
+            <select className="select" value={form.groupMember} onChange={set('groupMember')}>
+              <option value="">Prefer not to say</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          <div className="field">
+            <label className="field-label">Monthly household income (USD)</label>
+            <input
+              className="input"
+              type="number"
+              min="0"
+              step="1"
+              value={form.monthlyHouseholdIncome}
+              onChange={set('monthlyHouseholdIncome')}
+              placeholder="optional — saved to household income"
+            />
           </div>
         </div>
       </div>

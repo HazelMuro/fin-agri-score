@@ -1,3 +1,13 @@
+/**
+ * Express application factory (no listen): middleware + route mounting + global error handlers.
+ *
+ * Route layout:
+ *   /api/health, /api/auth/*           — no business CRUD behind JWT when secret unset (see requireAuth)
+ *   /api/farmers, /applications, …    — loan-officer APIs (JWT or open demo per requireAuth)
+ *
+ * Mounted from server.js; tests may require('./app') without starting a port.
+ */
+
 require('express-async-errors');
 
 const express = require('express');

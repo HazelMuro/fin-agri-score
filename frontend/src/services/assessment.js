@@ -1,3 +1,7 @@
+/**
+ * Readiness check, assessment hub payload, environment autofill / confirm — scoring wizard helpers.
+ */
+
 import api from './api';
 
 export const getReadiness = (applicationId) =>

@@ -1,3 +1,7 @@
+/**
+ * Shared Axios instance for all frontend API calls: base URL → /api, JWT header, friendly errors.
+ */
+
 import axios from 'axios';
 import { clearAccessToken, getAccessToken } from '../auth/authStorage';
 
@@ -27,15 +31,22 @@ api.interceptors.response.use(
       !url.includes('/auth/me')
     ) {
       clearAccessToken();
-      if (!window.location.pathname.startsWith('/login')) {
+      const path = window.location.pathname;
+      if (path !== '/login' && !path.startsWith('/login')) {
         window.location.assign('/login');
       }
     }
-    const message =
+    let message =
       err.response?.data?.error?.message ||
       err.response?.data?.detail ||
       err.message ||
       'Request failed';
+    if (!err.response && (err.code === 'ERR_NETWORK' || message === 'Network Error')) {
+      const hint = baseURL
+        ? `Expected API at ${baseURL}.`
+        : 'Using Vite proxy — backend should be on http://localhost:4000.';
+      message = `Cannot reach the server. ${hint} Start the API (backend: npm run dev), match DATABASE_URL to your Postgres port, then verify http://localhost:4000/api/health`;
+    }
     err.friendlyMessage = message;
     return Promise.reject(err);
   }

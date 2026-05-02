@@ -30,7 +30,6 @@ export default function ThemeToggle({ compact = false }) {
       title={`Switch to ${nextLabel}`}
     >
       {theme === 'dark' ? SunIcon : MoonIcon}
-      {!compact && <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>}
     </button>
   );
 }

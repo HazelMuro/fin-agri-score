@@ -253,9 +253,12 @@ EXCLUDE_COLUMNS = [
 
 RANDOM_STATE   = 42
 TEST_SIZE      = 0.20    # 20% held-out final test set
-CV_FOLDS       = 5       # stratified k-fold for CV on the training set
-N_ITER_SEARCH  = 30      # RandomizedSearchCV iterations per tuned model
-N_JOBS         = -1      # use all cores where supported
+CV_FOLDS       = 5       # stratified k-fold for baseline CV / stacking / ensemble sections
+# --- Hyperparameter search budget (~15–25 min typical laptop with several tunable models) ---
+CV_FOLDS_TUNING = 3      # folds during RandomizedSearchCV only (smaller than CV_FOLDS → faster)
+N_ITER_SEARCH   = 12     # random draws per model (was 30; lower → faster, slightly noisier search)
+TUNE_ONLY       = []     # optional subset e.g. ['CatBoost', 'XGBoost'] to tune fewer families
+N_JOBS          = -1     # use all cores where supported
 PRIMARY_METRIC = 'f1_macro'  # selection metric (macro F1)
 
 print('TARGET_COLUMN  =', TARGET_COLUMN)
@@ -263,6 +266,9 @@ print('EXCLUDE_COLUMNS=', EXCLUDE_COLUMNS)
 print('RANDOM_STATE   =', RANDOM_STATE)
 print('TEST_SIZE      =', TEST_SIZE)
 print('CV_FOLDS       =', CV_FOLDS)
+print('CV_FOLDS_TUNING=', CV_FOLDS_TUNING, '(used for RandomizedSearchCV only)')
+print('N_ITER_SEARCH  =', N_ITER_SEARCH)
+print('TUNE_ONLY      =', TUNE_ONLY or '(all candidates in search_spaces)')
 print('PRIMARY_METRIC =', PRIMARY_METRIC)
 """
 )
@@ -443,8 +449,10 @@ print(pd.Series(y_train).value_counts().sort_index())
 print('Test class distribution:')
 print(pd.Series(y_test).value_counts().sort_index())
 
-# Stratified CV splitter used for all CV-based evaluation/tuning below.
+# Stratified CV splitters — baselines/stacking use CV_FOLDS; RandomizedSearchCV uses
+# CV_FOLDS_TUNING (fewer splits) so a full tuning pass fits a ~15–25 min budget on a typical machine.
 cv = StratifiedKFold(n_splits=CV_FOLDS, shuffle=True, random_state=RANDOM_STATE)
+cv_tune = StratifiedKFold(n_splits=CV_FOLDS_TUNING, shuffle=True, random_state=RANDOM_STATE)
 """
 )
 
@@ -684,9 +692,10 @@ md(
     """## 10. Hyperparameter tuning — `RandomizedSearchCV` on the strong candidates
 
 We tune the strongest model families (Random Forest, Extra Trees, XGBoost,
-LightGBM, CatBoost) with `RandomizedSearchCV`, using **stratified 5-fold CV
-on the training set** and **macro F1** as the scorer. The test set is never
-exposed.
+LightGBM, CatBoost) with `RandomizedSearchCV`, using **stratified k-fold CV
+on the training set** (`CV_FOLDS_TUNING`, typically 3 folds for speed) and
+**macro F1** as the scorer. The test set is never exposed. Baseline models
+elsewhere still use `CV_FOLDS` (5) for fair comparison of untuned scores.
 """
 )
 
@@ -749,6 +758,9 @@ fitted_tuned  = {}
 for name, space in search_spaces.items():
     if name not in candidate_estimators:
         continue
+    if TUNE_ONLY and name not in TUNE_ONLY:
+        print(f'[skip] Not in TUNE_ONLY: {name}')
+        continue
     print(f'\\n--- Tuning {name} ---')
     base_pipe = make_pipeline(candidate_estimators[name])
 
@@ -759,7 +771,7 @@ for name, space in search_spaces.items():
             param_distributions=space,
             n_iter=N_ITER_SEARCH,
             scoring=PRIMARY_METRIC,
-            cv=cv,
+            cv=cv_tune,
             n_jobs=N_JOBS,
             random_state=RANDOM_STATE,
             refit=True,
@@ -1356,6 +1368,8 @@ metadata = {
     'random_state'         : RANDOM_STATE,
     'test_size'            : TEST_SIZE,
     'cv_folds'             : CV_FOLDS,
+    'cv_folds_tuning'      : CV_FOLDS_TUNING,
+    'n_iter_search'        : N_ITER_SEARCH,
     'primary_metric'       : PRIMARY_METRIC,
     'selected_model'       : best_name,
     'selection_reason'     : selection_reason,

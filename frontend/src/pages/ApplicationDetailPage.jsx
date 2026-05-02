@@ -4,15 +4,14 @@ import { downloadPdf, downloadReport, applicationSummaryPath, applicationSummary
 import AuditLogList from '../components/AuditLogList';
 import EnvironmentalMetrics from '../components/EnvironmentalMetrics';
 import ExplanationPanel from '../components/ExplanationPanel';
-import ArtifactXaiPanel from '../components/ArtifactXaiPanel';
 import RiskBadge from '../components/RiskBadge';
 import ScoreCard from '../components/ScoreCard';
 import ReadinessChecklist from '../components/ReadinessChecklist';
 import TableScroll from '../components/TableScroll';
 import { useApi } from '../hooks/useApi';
-import { getApplication } from '../services/applications';
+import { getApplication, updateApplicationStatus } from '../services/applications';
 import { getReadiness } from '../services/assessment';
-import { getXaiOverview, getXaiFeatureImportance, getXaiSampleExplanations } from '../services/xai';
+import { scoreApplication } from '../services/scores';
 import { currency, date, datetime } from '../utils/format';
 
 export default function ApplicationDetailPage() {
@@ -27,19 +26,31 @@ export default function ApplicationDetailPage() {
     }
   }, [location.pathname, location.search, location.state, navigate]);
 
-  const { data: app, loading, error } = useApi(() => getApplication(id), { deps: [id] });
-  const { data: xaiOverview } = useApi(() => getXaiOverview(10), { immediate: true });
-  const { data: xaiFeatureImportance } = useApi(() => getXaiFeatureImportance(10, 0), { immediate: true });
-  const { data: xaiSamples } = useApi(() => getXaiSampleExplanations(2, 0), { immediate: true });
+  const { data: app, loading, error, run } = useApi(() => getApplication(id), { deps: [id] });
   const [readiness, setReadiness] = useState(null);
   const [exportBusy, setExportBusy] = useState(false);
   const [exportPdfBusy, setExportPdfBusy] = useState(false);
   const [exportError, setExportError] = useState(null);
+  const [scoring, setScoring] = useState(false);
+  const [scoreError, setScoreError] = useState(null);
+  const [decisionBusy, setDecisionBusy] = useState(null);
+  const [decisionMsg, setDecisionMsg] = useState(null);
+  const [decisionErr, setDecisionErr] = useState(null);
 
   useEffect(() => {
     if (!id) return;
     getReadiness(id).then(setReadiness).catch(() => setReadiness(null));
   }, [id]);
+
+  const refreshReadiness = async () => {
+    if (!id) return;
+    try {
+      const r = await getReadiness(id);
+      setReadiness(r);
+    } catch {
+      setReadiness(null);
+    }
+  };
 
   if (loading) return <div className="page"><div className="spinner" /></div>;
   if (error) return <div className="page"><div className="card" style={{ color: 'var(--color-risk-high)' }}>{error}</div></div>;
@@ -64,7 +75,45 @@ export default function ApplicationDetailPage() {
     ? { label: 'Complete assessment', link: `/score?applicationId=${app.id}` }
     : readiness.state === 'scored'
     ? { label: 'Review score history', link: '/history' }
-    : { label: 'Run scoring', link: `/score?applicationId=${app.id}` };
+    : { label: 'Run Fin-Agri Score', link: `/score?applicationId=${app.id}` };
+
+  const handleRunFinAgriScore = async () => {
+    setScoreError(null);
+    setScoring(true);
+    try {
+      await scoreApplication(app.id, { rescore: true });
+      await run();
+      await refreshReadiness();
+    } catch (e) {
+      const msg =
+        e.response?.data?.error?.message ||
+        e.response?.data?.detail ||
+        e.friendlyMessage ||
+        'Scoring failed.';
+      setScoreError(msg);
+    } finally {
+      setScoring(false);
+    }
+  };
+
+  const handleDecision = async (status) => {
+    setDecisionErr(null);
+    setDecisionMsg(null);
+    setDecisionBusy(status);
+    try {
+      await updateApplicationStatus(app.id, status);
+      await run();
+      setDecisionMsg(
+        status === 'PENDING'
+          ? 'Flagged for review (status set to pending).'
+          : `Decision recorded: ${status}.`
+      );
+    } catch (e) {
+      setDecisionErr(e.friendlyMessage || 'Could not record decision.');
+    } finally {
+      setDecisionBusy(null);
+    }
+  };
 
   return (
     <div className="page">
@@ -78,6 +127,21 @@ export default function ApplicationDetailPage() {
           {exportError}
         </div>
       ) : null}
+      {scoreError ? (
+        <div className="alert alert-danger mb-4" role="alert">
+          {scoreError}
+        </div>
+      ) : null}
+      {decisionErr ? (
+        <div className="alert alert-danger mb-4" role="alert">
+          {decisionErr}
+        </div>
+      ) : null}
+      {decisionMsg ? (
+        <div className="banner is-ok mb-4" role="status">
+          {decisionMsg}
+        </div>
+      ) : null}
       <div className="page-header">
         <div>
           <Link to="/applications" className="text-sm text-muted">← Back to applications</Link>
@@ -89,7 +153,7 @@ export default function ApplicationDetailPage() {
           </p>
         </div>
         <div className="flex gap-2 items-center">
-          <RiskBadge band={latestScore?.riskBand} size="lg" />
+          <RiskBadge band={latestScore?.riskBand} finAgriScore={latestScore?.finAgriScore} size="lg" />
           <button
             type="button"
             className="btn btn-secondary"
@@ -135,9 +199,24 @@ export default function ApplicationDetailPage() {
           <Link to="/reports" className="btn btn-secondary">
             Reports
           </Link>
-          <Link to={`/score?applicationId=${app.id}`} className="btn">
-            {latestScore ? 'Re-score' : 'Score now'}
-          </Link>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            disabled={scoring || !readiness?.canScore}
+            title={!readiness?.canScore ? 'Complete readiness checks before scoring.' : undefined}
+            onClick={() => navigate(`/score?applicationId=${app.id}`)}
+          >
+            Open scoring wizard
+          </button>
+          <button
+            type="button"
+            className="btn"
+            disabled={scoring || !readiness?.canScore}
+            title={!readiness?.canScore ? 'Complete readiness checks before scoring.' : undefined}
+            onClick={handleRunFinAgriScore}
+          >
+            {scoring ? 'Running score…' : 'Run Fin-Agri Score'}
+          </button>
         </div>
       </div>
 
@@ -152,8 +231,8 @@ export default function ApplicationDetailPage() {
             </p>
           </div>
           <div className="flex gap-2" style={{ flexWrap: 'wrap' }}>
-            <Link to={primaryAction.link} className="btn">
-              {primaryAction.label}
+            <Link to={primaryAction.link} className="btn btn-secondary">
+              {primaryAction.label === 'Run Fin-Agri Score' ? 'Scoring wizard' : primaryAction.label}
             </Link>
             <Link to={`/farmers/${app.farmerId}`} className="btn btn-secondary">
               Open farmer profile
@@ -184,9 +263,15 @@ export default function ApplicationDetailPage() {
           {latestScore ? (
             <>
               <InfoRow label="Fin-Agri Score" value={latestScore.finAgriScore} />
-              <InfoRow label="Risk band" value={latestScore.riskBand} />
+              <InfoRow
+                label="Risk band"
+                value={<RiskBadge band={latestScore.riskBand} finAgriScore={latestScore.finAgriScore} size="sm" />}
+              />
               <InfoRow label="Predicted label" value={latestScore.predictedLabel} />
-              <InfoRow label="P (LOW class)" value={`${Math.round(latestScore.repaymentProbability * 100)}%`} />
+              <InfoRow
+                label="Probability of repayment"
+                value={`${Math.round(latestScore.repaymentProbability * 100)}%`}
+              />
               <InfoRow label="Model" value={latestScore.modelVersion} />
               <InfoRow label="Saved" value={datetime(latestScore.createdAt)} />
             </>
@@ -217,10 +302,18 @@ export default function ApplicationDetailPage() {
               </Link>
             </div>
           )}
-          {readiness.canScore && readiness.state !== 'scored' && (
-            <div className="mt-3">
-              <Link to={`/score?applicationId=${app.id}`} className="btn">
-                Run scoring →
+          {readiness.canScore && (
+            <div className="mt-3 flex gap-2 flex-wrap items-center">
+              <button
+                type="button"
+                className="btn"
+                disabled={scoring}
+                onClick={handleRunFinAgriScore}
+              >
+                {scoring ? 'Running Fin-Agri Score…' : 'Run Fin-Agri Score'}
+              </button>
+              <Link to={`/score?applicationId=${app.id}`} className="btn btn-secondary">
+                Open scoring wizard
               </Link>
             </div>
           )}
@@ -230,7 +323,18 @@ export default function ApplicationDetailPage() {
       {prediction && (
         <>
           <div className="mb-6">
-            <ScoreCard prediction={prediction} />
+            <ScoreCard
+              prediction={prediction}
+              farmerName={app?.farmer?.fullName}
+              loanPurpose={app?.purpose}
+              meta={{
+                featureCoverage: latestScore?.featuresSnapshot?.meta?.featureCoverage,
+                mappableCoverage: latestScore?.featuresSnapshot?.meta?.mappableCoverage,
+                mappableFilled: latestScore?.featuresSnapshot?.meta?.mappableFilled,
+                mappableTotal: latestScore?.featuresSnapshot?.meta?.mappableTotal,
+                imputedFeatures: [],
+              }}
+            />
           </div>
 
           <div className="grid-2 layout-explain-split mb-6">
@@ -241,25 +345,45 @@ export default function ApplicationDetailPage() {
             />
             <EnvironmentalMetrics data={app.satelliteData?.[0]} />
           </div>
-          <div className="mb-6">
-            <ArtifactXaiPanel
-              overview={xaiOverview}
-              featureImportance={xaiFeatureImportance?.items || []}
-              sampleExplanations={xaiSamples?.items || []}
-            />
-          </div>
+
           <div className="card mb-6">
-            <div className="flex-between" style={{ flexWrap: 'wrap', gap: 12 }}>
+            <div className="flex-between" style={{ flexWrap: 'wrap', gap: 16 }}>
               <div>
-                <h3 style={{ margin: 0 }}>Decision actions</h3>
+                <h3 style={{ margin: 0 }}>Record a decision</h3>
                 <p className="text-muted text-sm" style={{ marginBottom: 0 }}>
-                  Use this score in committee review, then download artifacts from Reports.
+                  Outcomes are saved on the application via the API (PATCH status). Use committee policy alongside the score.
                 </p>
               </div>
-              <div className="flex gap-2">
-                <Link to="/history" className="btn btn-secondary">Open score history</Link>
-                <Link to="/reports" className="btn">Open reports center</Link>
-              </div>
+            </div>
+            <div className="flex gap-2 flex-wrap mt-4" style={{ alignItems: 'stretch' }}>
+              <button
+                type="button"
+                className="btn"
+                disabled={!!decisionBusy}
+                onClick={() => handleDecision('APPROVED')}
+              >
+                {decisionBusy === 'APPROVED' ? 'Saving…' : 'APPROVE'}
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={!!decisionBusy}
+                onClick={() => handleDecision('REJECTED')}
+              >
+                {decisionBusy === 'REJECTED' ? 'Saving…' : 'REJECT'}
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={!!decisionBusy}
+                onClick={() => handleDecision('PENDING')}
+              >
+                {decisionBusy === 'PENDING' ? 'Saving…' : 'FLAG FOR REVIEW'}
+              </button>
+            </div>
+            <div className="flex gap-2 flex-wrap mt-4">
+              <Link to="/history" className="btn btn-ghost btn-sm">Open History</Link>
+              <Link to="/reports" className="btn btn-ghost btn-sm">Reports center</Link>
             </div>
           </div>
         </>
@@ -277,7 +401,7 @@ export default function ApplicationDetailPage() {
                     <tr key={s.id}>
                       <td className="text-xs text-muted">{datetime(s.createdAt)}</td>
                       <td className="font-mono">{s.finAgriScore}</td>
-                      <td><RiskBadge band={s.riskBand} size="sm" /></td>
+                      <td><RiskBadge band={s.riskBand} finAgriScore={s.finAgriScore} size="sm" /></td>
                       <td>{s.predictedLabel}</td>
                       <td className="text-xs text-muted">{s.modelVersion || '—'}</td>
                     </tr>
@@ -302,7 +426,9 @@ function InfoRow({ label, value }) {
   return (
     <div className="flex-between" style={{ padding: '7px 0', borderBottom: '1px solid var(--color-border)' }}>
       <span className="text-sm text-muted">{label}</span>
-      <span className="text-sm font-semibold" style={{ color: 'var(--color-navy)', textAlign: 'right' }}>{value || '—'}</span>
+      <span className="text-sm font-semibold" style={{ color: 'var(--color-navy)', textAlign: 'right' }}>
+        {value === undefined || value === null || value === '' ? '—' : value}
+      </span>
     </div>
   );
 }

@@ -21,6 +21,14 @@ export default function FarmersPage() {
   };
 
   useEffect(() => { load(); }, []);
+
+  // Real-time debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      load(q);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [q]);
   useEffect(() => {
     if (location.state?.createdFarmerName) {
       setToast({
@@ -42,13 +50,11 @@ export default function FarmersPage() {
         <div className="flex gap-2">
           <input
             className="input"
-            style={{ width: 260 }}
-            placeholder="Search by name or phone…"
+            style={{ width: 280 }}
+            placeholder="Search by name, district or phone…"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && load(q)}
           />
-          <button className="btn btn-secondary" onClick={() => load(q)}>Search</button>
           <Link className="btn" to="/farmers/new">+ Register farmer</Link>
         </div>
       </div>

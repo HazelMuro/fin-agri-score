@@ -1,7 +1,14 @@
+/**
+ * Top-level routes: dashboard, farmers & onboarding, applications, scoring wizard,
+ * score history, reports. Login path redirects home (backend may run “open” auth).
+ * Protected subtree uses RequireAuth → AppLayout (sidebar shell).
+ */
+
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext';
 import RequireAuth from './components/RequireAuth';
 import AppLayout from './layouts/AppLayout';
+import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import FarmersPage from './pages/FarmersPage';
 import FarmerOnboardingPage from './pages/FarmerOnboardingPage';
@@ -12,7 +19,7 @@ import ApplicationDetailPage from './pages/ApplicationDetailPage';
 import ReportsPage from './pages/ReportsPage';
 import ScoreApplicationPage from './pages/ScoreApplicationPage';
 import HistoryPage from './pages/HistoryPage';
-import LoginPage from './pages/LoginPage';
+import ScoreResultPage from './pages/ScoreResultPage';
 import AppErrorBoundary from './components/AppErrorBoundary';
 
 export default function App() {
@@ -33,6 +40,7 @@ export default function App() {
                 <Route path="/applications" element={<ApplicationsPage />} />
                 <Route path="/score" element={<ScoreApplicationPage />} />
                 <Route path="/history" element={<HistoryPage />} />
+                <Route path="/scores/:id" element={<ScoreResultPage />} />
                 <Route path="/reports" element={<ReportsPage />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Route>

@@ -9,7 +9,6 @@ import EnvironmentalMetrics from '../components/EnvironmentalMetrics';
 import ExplanationPanel from '../components/ExplanationPanel';
 import ScoreCard from '../components/ScoreCard';
 import ReadinessChecklist, { DualProgress } from '../components/ReadinessChecklist';
-import ArtifactXaiPanel from '../components/ArtifactXaiPanel';
 import FarmActivityForm from '../components/FarmActivityForm';
 import SocialCapitalForm from '../components/SocialCapitalForm';
 import HouseholdIncomeForm from '../components/HouseholdIncomeForm';
@@ -27,11 +26,6 @@ import {
   createSocialCapital,
   upsertHouseholdIncome,
 } from '../services/assessment';
-import {
-  getXaiOverview,
-  getXaiFeatureImportance,
-  getXaiSampleExplanations,
-} from '../services/xai';
 import { currency, date, datetime } from '../utils/format';
 import { downloadPdf, applicationSummaryPdfPath } from '../services/reports';
 
@@ -65,9 +59,6 @@ export default function ScoreApplicationPage() {
   const [scoring, setScoring] = useState(false);
   const [editedSinceLastScore, setEditedSinceLastScore] = useState(false);
   const [scoreResult, setScoreResult] = useState(null);
-  const [xaiOverview, setXaiOverview] = useState(null);
-  const [xaiFeatureImportance, setXaiFeatureImportance] = useState([]);
-  const [xaiSampleExplanations, setXaiSampleExplanations] = useState([]);
 
   const didAutoJumpRef = useRef(false);
 
@@ -93,24 +84,6 @@ export default function ScoreApplicationPage() {
       })
     ).then((pairs) => setAppsReadiness(Object.fromEntries(pairs)));
   }, [apps]);
-
-  useEffect(() => {
-    Promise.all([
-      getXaiOverview(10),
-      getXaiFeatureImportance(10, 0),
-      getXaiSampleExplanations(2, 0),
-    ])
-      .then(([ov, fi, se]) => {
-        setXaiOverview(ov);
-        setXaiFeatureImportance(fi?.items || []);
-        setXaiSampleExplanations(se?.items || []);
-      })
-      .catch(() => {
-        setXaiOverview(null);
-        setXaiFeatureImportance([]);
-        setXaiSampleExplanations([]);
-      });
-  }, []);
 
   useEffect(() => {
     if (!selectedId) {
@@ -248,14 +221,21 @@ export default function ScoreApplicationPage() {
       setScoreResult(res);
       setEditedSinceLastScore(false);
       if (res.reused) {
-        setInfo(
-          `Returning the existing score from ${res.reusedAgeSec}s ago. Use Re-score after edits for a fresh run.`
-        );
+        if (res.reusedReason === 'MODEL_INPUT_UNCHANGED') {
+          setInfo(
+            'Inputs that drive the credit model were unchanged — same risk band as before. (Some household fields like dietary diversity may not be in the model yet.)'
+          );
+        } else {
+          setInfo(
+            `Returning the existing score from ${res.reusedAgeSec}s ago. Use Re-score after edits for a fresh run.`
+          );
+        }
       } else {
         setInfo('Score saved successfully.');
       }
       await reloadApp();
     } catch (e) {
+      console.error('[ScoreApplicationPage] runScore error:', e);
       if (e.response?.status === 422 && e.response?.data?.error?.code === 'READINESS_GATE') {
         setReadiness(e.response.data.error.readiness);
         setError('Scoring blocked — complete the sections listed in readiness, then try again.');
@@ -265,7 +245,7 @@ export default function ScoreApplicationPage() {
           e.friendlyMessage
             || e.message
             || (typeof e.response?.data?.message === 'string' ? e.response.data.message : null)
-            || 'Scoring failed. Check the connection and try again, or open Reports if the service is down.'
+            || 'Scoring failed. The model service may be offline or the connection was lost. Check the backend logs.'
         );
       }
     } finally {
@@ -395,10 +375,17 @@ export default function ScoreApplicationPage() {
           }}
           rescoreAllowed={editedSinceLastScore}
           navigate={navigate}
-          xaiOverview={xaiOverview}
-          xaiFeatureImportance={xaiFeatureImportance}
-          xaiSampleExplanations={xaiSampleExplanations}
         />
+      )}
+
+      {scoring && (
+        <div className="modal-overlay">
+          <div className="card text-center" style={{ maxWidth: 400, padding: '40px 20px' }}>
+            <div className="spinner mb-4" style={{ width: 48, height: 48, borderWidth: 4 }} />
+            <h2 className="mb-2">Generating Score...</h2>
+            <p className="text-muted">The Fin-Agri model is analyzing farm, household, and satellite data to produce a risk assessment.</p>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -445,32 +432,56 @@ function StepSelect({ apps, readinessByApp, selectedId, filter, setFilter, onSel
           </button>
         ))}
       </div>
-      <div className="field field-full">
-        <label className="field-label">Application</label>
-        <select className="select" value={selectedId} onChange={(e) => onSelect(e.target.value)}>
-          <option value="">Choose an application…</option>
+      {filteredApps.length > 0 ? (
+        <div className="grid-2 mt-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
           {filteredApps.map((a) => {
             const r = readinessByApp[a.id];
-            const rs = r?.state ? ` · ${r.state.replace(/_/g, ' ')}` : '';
-            const warn = r?.warnings?.length ? ' · warnings' : '';
+            const isSelected = selectedId === a.id;
             return (
-            <option key={a.id} value={a.id}>
-              {a.farmer?.fullName || 'Unknown'} — {a.purpose} — {currency(a.amountRequested)} — {a.status}{rs}{warn}
-            </option>
+              <div
+                key={a.id}
+                className={`card selectable-card ${isSelected ? 'is-selected' : ''}`}
+                onClick={() => onSelect(a.id)}
+              >
+                <div className="flex-between mb-2">
+                  <span className="text-xs text-muted">ID: {a.id.slice(0, 8)}</span>
+                  <StatusBadge status={a.status} />
+                </div>
+                <div style={{ fontWeight: 700, fontSize: 16 }}>{a.farmer?.fullName || 'Unknown Farmer'}</div>
+                <div className="text-sm mb-3">{a.purpose} · {currency(a.amountRequested)}</div>
+                
+                {r && (
+                  <div className={`badge badge-sm ${r.canScore ? 'badge-low' : 'badge-neutral'}`} style={{ width: '100%', justifyContent: 'center' }}>
+                    {r.canScore ? '✓ Ready to score' : `• ${r.state.replace(/_/g, ' ')}`}
+                  </div>
+                )}
+                
+                {isSelected && (
+                  <div className="mt-3">
+                    <button className="btn btn-sm btn-full">Continue assessment →</button>
+                  </div>
+                )}
+              </div>
             );
           })}
-        </select>
-        <div className="field-hint">
-          Visibility is controlled by the filter above. Applications are not hidden silently.
         </div>
-      </div>
-      {!filteredApps.length && (
-        <div className="alert alert-info">
-          No applications in this filter. Switch to <strong>All</strong> to see every record.
+      ) : (
+        <div className="alert alert-info mt-4">
+          No applications match this filter. Try switching to <strong>All</strong>.
         </div>
       )}
     </div>
   );
+}
+
+function StatusBadge({ status }) {
+  const colors = {
+    SCORED: 'badge-low',
+    PENDING: 'badge-neutral',
+    SUBMITTED: 'badge-info',
+    REJECTED: 'badge-high',
+  };
+  return <span className={`badge badge-xs ${colors[status] || 'badge-neutral'}`}>{status}</span>;
 }
 
 function StepFarmHousehold({ application, currentFarmActivity, currentHousehold, busy, onSaveActivity, onSaveHousehold, goNext }) {
@@ -749,9 +760,6 @@ function StepReview({
   onEditBeforeRescore,
   rescoreAllowed,
   navigate,
-  xaiOverview,
-  xaiFeatureImportance,
-  xaiSampleExplanations,
 }) {
   const [pdfBusy, setPdfBusy] = useState(false);
 
@@ -915,26 +923,35 @@ function StepReview({
         </div>
       </div>
 
-      {scoring && (
-        <div className="alert alert-info">
-          <span className="spinner" style={{ width: 14, height: 14, borderWidth: 2, marginRight: 8 }} />
-          Running model scoring. Please wait...
-        </div>
-      )}
+      {/* Loading indicator removed from inline flow as it's now a modal overlay above */}
+
 
       {scoreResult && prediction && (
         <>
           <div className={`banner mb-3 ${scoreResult.reused ? 'is-warn' : 'is-ok'}`}>
-            {scoreResult.reused
-              ? `Existing score reused from ${scoreResult.reusedAgeSec || 0}s ago. Use Re-score after edits for a fresh run.`
-              : `Score saved successfully${scoreSavedAt ? ` at ${scoreSavedAt}` : ''}.`}
+            {scoreResult.reusedReason === 'MODEL_INPUT_UNCHANGED'
+              ? 'Re-score skipped: the values sent to the risk model are unchanged. Your edits did not alter model-facing inputs (for example dietary diversity may not map into this deployment feature list yet).'
+              : scoreResult.reused
+                ? `Existing score reused from ${scoreResult.reusedAgeSec || 0}s ago. Use Re-score after edits for a fresh run.`
+                : `Score saved successfully${scoreSavedAt ? ` at ${scoreSavedAt}` : ''}.`}
           </div>
+
+          {!scoreResult.reused && scoreResult.minorBlendApplied && (
+            <div className="alert alert-info text-sm mb-3">
+              Risk probabilities were blended with your previous score because only satellite/rainfall-type inputs changed (see audit trail for fields). Larger edits still produce a fully fresh model run.
+            </div>
+          )}
 
           <ScoreCard
             prediction={prediction}
+            farmerName={farmer?.fullName || application?.farmer?.fullName}
+            loanPurpose={application?.purpose}
             meta={{
               dataConfidence: scoreResult.dataConfidence,
               featureCoverage: scoreResult.featureCoverage,
+              mappableCoverage: scoreResult.mappableCoverage,
+              mappableFilled: scoreResult.mappableFilled,
+              mappableTotal: scoreResult.mappableTotal,
               imputedFeatures: scoreResult.imputedFeatures,
               provenanceSummary: scoreResult.provenanceSummary,
               warnings: scoreResult.readiness?.warnings,
@@ -953,23 +970,25 @@ function StepReview({
             />
             <EnvironmentalMetrics data={scoreResult.inputs?.satellite || satellite} />
           </div>
-          <div className="mt-4">
-            <ArtifactXaiPanel
-              overview={xaiOverview}
-              featureImportance={xaiFeatureImportance}
-              sampleExplanations={xaiSampleExplanations}
-            />
-          </div>
-          <div className="card">
+          <div className="card" style={{ background: 'linear-gradient(120deg, var(--color-surface) 0%, var(--color-primary-50) 100%)' }}>
             <div className="flex-between" style={{ flexWrap: 'wrap', gap: 12 }}>
               <div>
-                <h3 style={{ margin: 0 }}>Next steps</h3>
+                <h3 style={{ margin: 0 }}>Score saved ✓</h3>
                 <p className="text-muted text-sm" style={{ marginBottom: 0 }}>
-                  This result is saved in score history and audit logs. Continue to case review or reporting.
+                  Result stored in score history. Open the full result page to share, review, or download at any time.
                 </p>
               </div>
               <div className="flex gap-2" style={{ flexWrap: 'wrap' }}>
-                <button type="button" className="btn" onClick={() => navigate(`/applications/${application.id}`)}>
+                {scoreResult?.score?.id && (
+                  <button
+                    type="button"
+                    className="btn btn-lg"
+                    onClick={() => navigate(`/scores/${scoreResult.score.id}`)}
+                  >
+                    View full result →
+                  </button>
+                )}
+                <button type="button" className="btn btn-secondary" onClick={() => navigate(`/applications/${application.id}`)}>
                   Open application
                 </button>
                 <button
@@ -1003,8 +1022,11 @@ function StepReview({
       )}
       {scoreResult && !prediction && (
         <div className="alert alert-warning">
-          Score response received, but explanation payload was incomplete. Open the application to verify saved score details.
-          <div className="mt-2">
+          Score response received, but explanation payload was incomplete. Open the result page or application to verify saved score details.
+          <div className="flex gap-2 mt-2">
+            {scoreResult?.score?.id && (
+              <button className="btn btn-sm" onClick={() => navigate(`/scores/${scoreResult.score.id}`)}>View result page</button>
+            )}
             <button className="btn btn-secondary btn-sm" onClick={() => navigate(`/applications/${application?.id}`)} disabled={!application?.id}>
               Open application
             </button>

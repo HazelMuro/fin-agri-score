@@ -1,3 +1,7 @@
+/**
+ * Reads Objective 1 CSV/JSON artifacts from ARTIFACTS_DIR for GET /api/xai/* responses.
+ */
+
 const fs = require('fs');
 const path = require('path');
 const { parse } = require('csv-parse/sync');

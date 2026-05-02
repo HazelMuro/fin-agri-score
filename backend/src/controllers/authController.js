@@ -1,3 +1,7 @@
+/**
+ * JWT login (when JWT_SECRET set) and GET /auth/me for session bootstrap.
+ */
+
 const bcrypt = require('bcryptjs');
 const prisma = require('../config/prisma');
 const { signAccessToken } = require('../utils/jwt');

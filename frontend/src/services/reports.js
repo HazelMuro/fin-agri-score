@@ -1,3 +1,7 @@
+/**
+ * Report downloads (CSV/PDF blobs) and REPORT_DOWNLOADS path constants for the Reports UI.
+ */
+
 import api from './api';
 
 /**

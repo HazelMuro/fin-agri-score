@@ -1,3 +1,7 @@
+/**
+ * Async data hook: wraps a fetcher function with loading/error state and optional initial run.
+ */
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 export function useApi(fn, { immediate = true, deps = [] } = {}) {

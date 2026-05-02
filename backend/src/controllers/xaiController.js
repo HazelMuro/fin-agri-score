@@ -1,3 +1,7 @@
+/**
+ * HTTP facade for SHAP / explainability artifacts shipped with Objective 1 output files.
+ */
+
 const xaiArtifacts = require('../services/xaiArtifactsService');
 
 function toInt(raw, fallback) {

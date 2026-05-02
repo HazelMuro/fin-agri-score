@@ -1,3 +1,7 @@
+/**
+ * REST routes for /api/farmers — validated with Zod (see farmerCreateSchema / farmerUpdateSchema).
+ */
+
 const { Router } = require('express');
 const { z } = require('zod');
 const { validate } = require('../middleware/validate');
@@ -24,6 +28,7 @@ const farmerUpdateSchema = farmerCreateSchema.partial();
 
 router.get('/', c.list);
 router.get('/:id', c.getOne);
+router.get('/:id/environment-preview', c.getEnvironmentPreview);
 router.post('/', validate({ body: farmerCreateSchema }), c.create);
 router.patch('/:id', validate({ body: farmerUpdateSchema }), c.update);
 router.delete('/:id', c.remove);

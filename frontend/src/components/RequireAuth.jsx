@@ -1,10 +1,9 @@
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth, useAuthBootstrap } from '../auth/AuthContext';
 
 export default function RequireAuth() {
-  const { user, authDisabled } = useAuth();
   const bootstrapped = useAuthBootstrap();
-  const location = useLocation();
+  const { user } = useAuth();
 
   if (!bootstrapped) {
     return (
@@ -15,9 +14,9 @@ export default function RequireAuth() {
     );
   }
 
-  if (authDisabled || user) {
-    return <Outlet />;
+  if (!user) {
+    return <Navigate to="/login" replace />;
   }
 
-  return <Navigate to="/login" replace state={{ from: location }} />;
+  return <Outlet />;
 }

@@ -4,6 +4,7 @@ import FarmerForm from '../components/FarmerForm';
 import FarmActivityForm from '../components/FarmActivityForm';
 import SocialCapitalForm from '../components/SocialCapitalForm';
 import HouseholdIncomeForm from '../components/HouseholdIncomeForm';
+import EnvironmentPreviewStep from '../components/EnvironmentPreviewStep';
 import { createFarmer } from '../services/farmers';
 import {
   createFarmActivity,
@@ -16,7 +17,8 @@ const STEPS = [
   { id: 2, label: 'Household income' },
   { id: 3, label: 'Farm activity' },
   { id: 4, label: 'Social capital' },
-  { id: 5, label: 'Complete profile' },
+  { id: 5, label: 'Environmental context' },
+  { id: 6, label: 'Complete profile' },
 ];
 
 export default function FarmerOnboardingPage() {
@@ -27,9 +29,11 @@ export default function FarmerOnboardingPage() {
   const [toast, setToast] = useState(null);
 
   const [farmer, setFarmer] = useState(null);
+  const [incomePrefill, setIncomePrefill] = useState(null);
   const [householdSaved, setHouseholdSaved] = useState(false);
   const [activitySaved, setActivitySaved] = useState(false);
   const [socialSaved, setSocialSaved] = useState(false);
+  const [envSaved, setEnvSaved] = useState(false);
 
   const completeness = useMemo(() => {
     const flags = [
@@ -37,25 +41,40 @@ export default function FarmerOnboardingPage() {
       householdSaved,
       activitySaved,
       socialSaved,
+      envSaved,
     ];
     return Math.round((flags.filter(Boolean).length / flags.length) * 100);
-  }, [farmer, householdSaved, activitySaved, socialSaved]);
+  }, [farmer, householdSaved, activitySaved, socialSaved, envSaved]);
+
   const maxUnlockedStep = useMemo(() => {
     if (!farmer?.id) return 1;
     if (!householdSaved) return 2;
     if (!activitySaved) return 3;
     if (!socialSaved) return 4;
-    return 5;
-  }, [farmer, householdSaved, activitySaved, socialSaved]);
+    if (!envSaved) return 5;
+    return 6;
+  }, [farmer, householdSaved, activitySaved, socialSaved, envSaved]);
 
-  const next = () => setStep((s) => Math.min(5, s + 1));
+  const next = () => setStep((s) => Math.min(6, s + 1));
   const back = () => setStep((s) => Math.max(1, s - 1));
 
   const handleFarmerCreate = async (payload) => {
     setSaving(true);
     setError(null);
     try {
-      const created = await createFarmer(payload);
+      const { monthlyHouseholdIncome, ...farmerPayload } = payload;
+      const created = await createFarmer(farmerPayload);
+
+      if (monthlyHouseholdIncome != null && !Number.isNaN(Number(monthlyHouseholdIncome))) {
+        await upsertHouseholdIncome({
+          farmerId: created.id,
+          mainSource: 'Household income (registration)',
+          mainAmount: Number(monthlyHouseholdIncome),
+        });
+        setIncomePrefill(Number(monthlyHouseholdIncome));
+        setHouseholdSaved(true);
+      }
+
       setFarmer(created);
       setToast('Farmer profile created. Continue with assessment details.');
       setStep(2);
@@ -121,7 +140,11 @@ export default function FarmerOnboardingPage() {
           </div>
           <HouseholdIncomeForm
             farmerId={farmer?.id}
-            initial={{}}
+            initial={
+              incomePrefill != null
+                ? { mainAmount: incomePrefill, mainSource: 'Other' }
+                : {}
+            }
             upsertFn={async (payload) => {
               const saved = await upsertHouseholdIncome(payload);
               setHouseholdSaved(true);
@@ -183,7 +206,27 @@ export default function FarmerOnboardingPage() {
 
       {step === 5 && (
         <div className="card">
-          <h2>Step 5 · Complete profile</h2>
+          <div className="card-header">
+            <h2 style={{ margin: 0 }}>Step 5 · Environmental context</h2>
+          </div>
+          <EnvironmentPreviewStep
+            farmerId={farmer?.id}
+            onConfirm={() => {
+              setEnvSaved(true);
+              setToast('Environmental context confirmed.');
+              setStep(6);
+            }}
+            submitting={saving}
+          />
+          <div className="step-footer mt-4">
+            <button className="btn btn-secondary" onClick={back}>← Back</button>
+          </div>
+        </div>
+      )}
+
+      {step === 6 && (
+        <div className="card">
+          <h2>Step 6 · Complete profile</h2>
           <p className="text-muted">
             Farmer onboarding is complete. Next, create a loan application and continue to readiness and scoring.
           </p>
@@ -203,6 +246,10 @@ export default function FarmerOnboardingPage() {
             <div className={`checklist-item ${socialSaved ? 'is-ok' : 'is-partial'}`}>
               <span style={{ fontWeight: 700 }}>{socialSaved ? '✓' : '◐'}</span>
               <div>Social capital</div>
+            </div>
+            <div className={`checklist-item ${envSaved ? 'is-ok' : 'is-partial'}`}>
+              <span style={{ fontWeight: 700 }}>{envSaved ? '✓' : '◐'}</span>
+              <div>Environmental context</div>
             </div>
           </div>
           <div className="step-footer mt-4">
@@ -224,6 +271,7 @@ export default function FarmerOnboardingPage() {
           </div>
         </div>
       )}
+
     </div>
   );
 }

@@ -1,3 +1,7 @@
+/**
+ * Scoring HTTP layer: POST run prediction + persist CreditScore; GET list scores / one score by id.
+ */
+
 const prisma = require('../config/prisma');
 const scoringService = require('../services/scoringService');
 
@@ -21,8 +25,14 @@ async function scoreApp(req, res) {
       readiness: result.readiness,
       reused: result.reused || false,
       reusedAgeSec: result.reusedAgeSec || null,
+      reusedReason: result.reusedReason || null,
+      minorBlendApplied: result.minorBlendApplied || false,
+      minorBlendFields: result.minorBlendFields || null,
       dataConfidence: result.dataConfidence ?? null,
       featureCoverage: result.featureCoverage ?? null,
+      mappableCoverage: result.mappableCoverage ?? null,
+      mappableFilled: result.mappableFilled ?? null,
+      mappableTotal: result.mappableTotal ?? null,
       imputedFeatures: result.imputedFeatures || [],
       provenanceSummary: result.provenanceSummary || null,
       featuresUsed: result.featuresUsed,

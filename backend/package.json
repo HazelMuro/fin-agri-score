@@ -11,7 +11,13 @@
     "prisma:migrate": "prisma migrate dev --name init",
     "prisma:reset": "prisma migrate reset --force",
     "prisma:studio": "prisma studio",
+    "db:whoami": "node scripts/db-whoami.js",
+    "db:counts": "node scripts/db-counts.js",
     "seed": "node prisma/seed.js",
+    "seed:medium": "node scripts/seed-medium-presets.js",
+    "seed:risk-demos": "node scripts/seed-medium-presets.js",
+    "probe:risk-presets": "node scripts/probe-risk-presets.js",
+    "export:medium-overlays": "node scripts/export-medium-overlays.js",
     "test": "jest",
     "test:ci": "jest --ci --forceExit"
   },

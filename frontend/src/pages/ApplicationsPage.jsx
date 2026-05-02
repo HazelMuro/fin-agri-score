@@ -65,7 +65,9 @@ export default function ApplicationsPage() {
       const statusParam = ['approved', 'rejected', 'pending', 'scored'].includes(view)
         ? view.toUpperCase()
         : undefined;
-      const res = await listApplications(statusParam ? { status: statusParam } : {});
+      const res = await listApplications(
+        statusParam ? { status: statusParam, take: 300 } : { take: 300 }
+      );
       const rows = res.items || [];
       setItems(rows);
       const states = await Promise.all(

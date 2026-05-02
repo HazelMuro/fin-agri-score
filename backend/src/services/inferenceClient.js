@@ -13,12 +13,21 @@ const client = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-async function predict(features, applicationId) {
+async function predict(features, applicationId, opts = {}) {
   try {
-    const response = await client.post('/predict', {
+    const body = {
       features,
-      application_id: applicationId,
-    });
+      application_id: applicationId ?? null,
+    };
+    if (
+      opts.previousClassProbabilities &&
+      opts.minorBlendAlpha != null &&
+      Number.isFinite(Number(opts.minorBlendAlpha))
+    ) {
+      body.previous_class_probabilities = opts.previousClassProbabilities;
+      body.minor_blend_alpha = Number(opts.minorBlendAlpha);
+    }
+    const response = await client.post('/predict', body);
     return response.data;
   } catch (err) {
     const status = err.response?.status || 502;

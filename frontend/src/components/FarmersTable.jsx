@@ -1,65 +1,66 @@
-import { Link } from 'react-router-dom';
-import TableScroll from './TableScroll';
+import { useNavigate } from 'react-router-dom';
 import { initials } from '../utils/format';
+import TableScroll from './TableScroll';
 
-export default function FarmersTable({ farmers = [] }) {
+export default function FarmersTable({ farmers }) {
+  const navigate = useNavigate();
+
   if (!farmers.length) {
     return (
       <div className="state">
-        <div className="state-emoji">🌱</div>
-        <p>No farmers yet. Register your first farmer to get started.</p>
+        <div className="state-emoji">👤</div>
+        <p>No farmers found matching your criteria.</p>
       </div>
     );
   }
 
   return (
-    <TableScroll ariaLabel="Farmers" stickyFirstColumn>
+    <TableScroll ariaLabel="Farmers list" stickyFirstColumn>
       <table className="table">
-      <thead>
-        <tr>
-          <th>Farmer</th>
-          <th>District</th>
-          <th>Farm size</th>
-          <th>Applications</th>
-          <th className="text-right">Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        {farmers.map((f) => (
-          <tr key={f.id}>
-            <td>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div
-                  style={{
-                    width: 36, height: 36, borderRadius: '50%',
-                    background: 'var(--color-primary-50)', color: 'var(--color-primary)',
-                    fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 13,
+        <thead>
+          <tr>
+            <th>Farmer</th>
+            <th>Location</th>
+            <th>Phone</th>
+            <th>Gender/Age</th>
+            <th className="text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {farmers.map((f) => (
+            <tr key={f.id} onClick={() => navigate(`/farmers/${f.id}`)} style={{ cursor: 'pointer' }}>
+              <td className="sticky-col">
+                <div className="flex items-center gap-3">
+                  <div className="initials-avatar" style={{ width: 32, height: 32, fontSize: 12 }}>
+                    {initials(f.fullName)}
+                  </div>
+                  <div style={{ fontWeight: 600, color: 'var(--color-navy)' }}>
+                    {f.fullName}
+                  </div>
+                </div>
+              </td>
+              <td className="text-sm">
+                {f.district} · {f.province}
+              </td>
+              <td className="text-sm font-mono">{f.phone || '—'}</td>
+              <td className="text-sm text-muted">
+                {f.gender || '—'} · {f.age || '—'}
+              </td>
+              <td className="text-right">
+                <button 
+                  className="btn btn-ghost btn-xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/farmers/${f.id}`);
                   }}
                 >
-                  {initials(f.fullName)}
-                </div>
-                <div>
-                  <div style={{ fontWeight: 600, color: 'var(--color-navy)' }}>{f.fullName}</div>
-                  <div className="text-xs text-faint">{f.phone || f.nationalId || '—'}</div>
-                </div>
-              </div>
-            </td>
-            <td>
-              <div>{f.district || '—'}</div>
-              <div className="text-xs text-faint">{f.province || ''}</div>
-            </td>
-            <td>{f.farmSizeHa != null ? `${f.farmSizeHa} ha` : '—'}</td>
-            <td>{f._count?.applications ?? 0}</td>
-            <td className="text-right">
-              <Link className="btn btn-ghost btn-sm" to={`/farmers/${f.id}`}>
-                View profile
-              </Link>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+                  View Profile →
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </TableScroll>
   );
 }

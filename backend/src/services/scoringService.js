@@ -16,11 +16,37 @@
 
 const prisma = require('../config/prisma');
 const inferenceClient = require('./inferenceClient');
-const { buildFeaturesFromRecord } = require('./featureBuilder');
+const {
+  buildFeaturesFromRecord,
+  projectModelInputSnapshot,
+  modelInputsEquivalent,
+  computeMappableCoverageStats,
+  applyTrainingMediumOverlay,
+} = require('./featureBuilder');
 const auditService = require('./auditService');
 const readinessService = require('./readinessService');
+const { getRescoreMinorBlendDecision } = require('./rescoreMinorBlend');
 
 const DEDUPE_SECONDS = Number(process.env.SCORE_DEDUPE_SECONDS || 60);
+
+function predictionPayloadFromStoredScore(row) {
+  const meta = row.featuresSnapshot?.meta || {};
+  return {
+    predicted_label: row.predictedLabel,
+    class_probabilities: row.classProbabilities,
+    p_low_risk: row.repaymentProbability,
+    fin_agri_score: row.finAgriScore,
+    risk_band: row.riskBand,
+    recommendation: row.recommendation,
+    top_factors: row.topFactors || [],
+    model_name: row.modelName,
+    model_version: row.modelVersion,
+    feature_coverage:
+      meta.featureCoverage != null ? meta.featureCoverage : undefined,
+    imputed_features: [],
+    probability_blend_applied: false,
+  };
+}
 
 function summariseProvenance(provenance) {
   const counts = {};
@@ -72,23 +98,18 @@ async function scoreApplication(
     if (recent) {
       const ageSec = (Date.now() - new Date(recent.createdAt).getTime()) / 1000;
       if (ageSec < DEDUPE_SECONDS) {
+        const meta = recent.featuresSnapshot?.meta || {};
         return {
           score: recent,
           application: recent.application,
-          prediction: {
-            predicted_label: recent.predictedLabel,
-            class_probabilities: recent.classProbabilities,
-            p_low_risk: recent.repaymentProbability,
-            fin_agri_score: recent.finAgriScore,
-            risk_band: recent.riskBand,
-            recommendation: recent.recommendation,
-            top_factors: recent.topFactors || [],
-            model_name: recent.modelName,
-            model_version: recent.modelVersion,
-          },
+          prediction: predictionPayloadFromStoredScore(recent),
           readiness,
           reused: true,
           reusedAgeSec: Math.round(ageSec),
+          reusedReason: 'TIME_DEDUPE',
+          mappableCoverage: meta.mappableCoverage ?? null,
+          mappableFilled: meta.mappableFilled ?? null,
+          mappableTotal: meta.mappableTotal ?? null,
         };
       }
     }
@@ -102,6 +123,7 @@ async function scoreApplication(
           householdIncome: true,
           farmActivities: { orderBy: { createdAt: 'desc' }, take: 1 },
           socialCapital: { orderBy: { createdAt: 'desc' }, take: 1 },
+          assets: { orderBy: { createdAt: 'desc' }, take: 40 },
         },
       },
       satelliteData: { orderBy: { createdAt: 'desc' }, take: 1 },
@@ -118,6 +140,7 @@ async function scoreApplication(
   const social = application.farmer.socialCapital[0] || null;
   const satellite = application.satelliteData[0] || null;
   const household = application.farmer.householdIncome || null;
+  const assetRows = application.farmer.assets || [];
 
   const { features, provenance } = buildFeaturesFromRecord({
     farmer: application.farmer,
@@ -126,9 +149,103 @@ async function scoreApplication(
     social,
     satellite,
     household,
+    assets: assetRows,
   });
 
-  const prediction = await inferenceClient.predict(features, applicationId);
+  const featuresForModel = applyTrainingMediumOverlay(
+    features,
+    application.farmer.phone
+  );
+
+  const mappableStats = computeMappableCoverageStats(featuresForModel);
+
+  const inputSnapshot = projectModelInputSnapshot(featuresForModel);
+
+  let prevScore = null;
+  let prevInputs = null;
+
+  if (rescore) {
+    prevScore = await prisma.creditScore.findFirst({
+      where: { applicationId },
+      orderBy: { createdAt: 'desc' },
+    });
+    const snap = prevScore?.featuresSnapshot;
+    prevInputs =
+      snap?.modelInputs ??
+      (snap && typeof snap === 'object' && !snap.meta ? snap : null);
+    if (
+      prevInputs &&
+      snap &&
+      modelInputsEquivalent(prevInputs, inputSnapshot)
+    ) {
+      const prediction = predictionPayloadFromStoredScore(prevScore);
+      const fc = prediction.feature_coverage;
+      const dataConfidence = computeDataConfidence({
+        readiness,
+        featureCoverage: fc != null ? fc : undefined,
+        provenance,
+      });
+
+      await auditService.log({
+        applicationId,
+        userId: actingUserId,
+        action: 'APPLICATION_RESCORE_SKIPPED',
+        details: {
+          reason: 'MODEL_INPUT_UNCHANGED',
+          predictedLabel: prevScore.predictedLabel,
+          riskBand: prevScore.riskBand,
+        },
+      });
+
+      return {
+        score: prevScore,
+        application,
+        prediction,
+        readiness,
+        featuresUsed: featuresForModel,
+        featureProvenance: provenance,
+        provenanceSummary: summariseProvenance(provenance),
+        dataConfidence,
+        imputedFeatures: [],
+        featureCoverage: fc ?? null,
+        household,
+        activity,
+        social,
+        satellite,
+        reused: true,
+        reusedReason: 'MODEL_INPUT_UNCHANGED',
+        mappableCoverage: mappableStats.mappableCoverage,
+        mappableFilled: mappableStats.mappableFilled,
+        mappableTotal: mappableStats.mappableTotal,
+      };
+    }
+  }
+
+  let minorBlendOpts = {};
+  let minorBlendMeta = null;
+  if (rescore && prevScore && prevInputs) {
+    const blendDecision = getRescoreMinorBlendDecision(
+      prevInputs,
+      inputSnapshot,
+      prevScore
+    );
+    if (blendDecision.apply) {
+      minorBlendOpts = {
+        previousClassProbabilities: blendDecision.previousClassProbabilities,
+        minorBlendAlpha: blendDecision.minorBlendAlpha,
+      };
+      minorBlendMeta = {
+        alpha: blendDecision.minorBlendAlpha,
+        changedKeys: blendDecision.changedKeys,
+      };
+    }
+  }
+
+  const prediction = await inferenceClient.predict(
+    featuresForModel,
+    applicationId,
+    minorBlendOpts
+  );
 
   const dataConfidence = computeDataConfidence({
     readiness,
@@ -136,31 +253,50 @@ async function scoreApplication(
     provenance,
   });
 
-  const provenanceSummary = summariseProvenance(provenance);
-
-  const pLow =
+  const probs = prediction.class_probabilities || {};
+  let pRepayment =
     prediction.p_low_risk != null
       ? prediction.p_low_risk
       : prediction.repayment_probability;
+
+  // Better proxy for "Confidence they will repay": 1 - P(HIGH_RISK)
+  if (probs.HIGH != null) {
+    pRepayment = 1 - probs.HIGH;
+  } else if (probs.LOW != null && probs.MEDIUM != null) {
+    pRepayment = probs.LOW + probs.MEDIUM;
+  }
 
   const score = await prisma.creditScore.create({
     data: {
       applicationId,
       predictedLabel: prediction.predicted_label,
       classProbabilities: prediction.class_probabilities,
-      repaymentProbability: pLow,
+      repaymentProbability: pRepayment,
       finAgriScore: prediction.fin_agri_score,
       riskBand: prediction.risk_band,
       recommendation: prediction.recommendation,
       topFactors: prediction.top_factors || [],
       modelName: prediction.model_name,
       modelVersion: prediction.model_version,
+      featuresSnapshot: {
+        modelInputs: inputSnapshot,
+        meta: {
+          featureCoverage: prediction.feature_coverage,
+          imputedFeatureCount: (prediction.imputed_features || []).length,
+          mappableCoverage: mappableStats.mappableCoverage,
+          mappableFilled: mappableStats.mappableFilled,
+          mappableTotal: mappableStats.mappableTotal,
+        },
+      },
     },
   });
 
   await prisma.loanApplication.update({
     where: { id: applicationId },
-    data: { status: 'SCORED' },
+    data: {
+      status: 'SCORED',
+      updatedAt: new Date(),
+    },
   });
 
   await auditService.log({
@@ -179,6 +315,9 @@ async function scoreApplication(
       dataConfidence,
       featureCoverage: prediction.feature_coverage,
       imputedFeatureCount: (prediction.imputed_features || []).length,
+      probabilityBlendApplied: !!prediction.probability_blend_applied,
+      minorBlendAlpha: minorBlendMeta?.alpha,
+      minorBlendFields: minorBlendMeta?.changedKeys,
     },
   });
 
@@ -187,7 +326,7 @@ async function scoreApplication(
     application,
     prediction,
     readiness,
-    featuresUsed: features,
+    featuresUsed: featuresForModel,
     featureProvenance: provenance,
     provenanceSummary,
     dataConfidence,
@@ -198,6 +337,11 @@ async function scoreApplication(
     social,
     satellite,
     reused: false,
+    minorBlendApplied: !!prediction.probability_blend_applied,
+    minorBlendFields: minorBlendMeta?.changedKeys || null,
+    mappableCoverage: mappableStats.mappableCoverage,
+    mappableFilled: mappableStats.mappableFilled,
+    mappableTotal: mappableStats.mappableTotal,
   };
 }
 
