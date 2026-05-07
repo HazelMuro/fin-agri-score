@@ -18,23 +18,23 @@ import {
 
 const NAV = [
   { to: '/', label: 'Dashboard', Icon: IconDashboard, end: true },
-  { to: '/farmers', label: 'Farmers', Icon: IconFarmers },
-  { to: '/applications', label: 'Applications', Icon: IconApplications },
-  { to: '/score', label: 'Score application', Icon: IconScore },
-  { to: '/history', label: 'History', Icon: IconHistory },
-  { to: '/reports', label: 'Reports', Icon: IconReports },
+  { to: '/farmers', label: 'Farmer Database', Icon: IconFarmers, roles: ['LOAN_OFFICER', 'ADMIN', 'CREDIT_MANAGER'] },
+  { to: '/applications', label: 'Loan Queue', Icon: IconApplications, roles: ['LOAN_OFFICER', 'CREDIT_MANAGER', 'ADMIN'] },
+  { to: '/score', label: 'Run Score', Icon: IconScore, roles: ['LOAN_OFFICER', 'ADMIN'] },
+  { to: '/history', label: 'Decision History', Icon: IconHistory, roles: ['CREDIT_MANAGER', 'ADMIN'] },
+  { to: '/reports', label: 'Portfolio Reports', Icon: IconReports, roles: ['CREDIT_MANAGER', 'ADMIN'] },
 ];
 
 function topbarForPath(pathname) {
   if (pathname === '/' || pathname === '') return { kicker: 'Overview', title: 'Dashboard' };
-  if (pathname.startsWith('/farmers/new')) return { kicker: 'Farmers', title: 'Register farmer' };
-  if (pathname.startsWith('/farmers')) return { kicker: 'Farmers', title: 'Farmer profile' };
-  if (pathname === '/applications/new') return { kicker: 'Applications', title: 'New application' };
-  if (pathname === '/applications') return { kicker: 'Applications', title: 'Loan applications' };
-  if (pathname.startsWith('/applications/')) return { kicker: 'Applications', title: 'Application' };
-  if (pathname === '/score') return { kicker: 'Risk Model', title: 'Fin-Agri Assessment' };
-  if (pathname === '/history') return { kicker: 'Audit Trail', title: 'Assessment History' };
-  if (pathname === '/reports') return { kicker: 'Intelligence', title: 'Reports & Exports' };
+  if (pathname.startsWith('/farmers/new')) return { kicker: 'Agent View', title: 'Onboard New Farmer' };
+  if (pathname.startsWith('/farmers')) return { kicker: 'Portfolio', title: 'Farmer Profile' };
+  if (pathname === '/applications/new') return { kicker: 'Agent View', title: 'Create Application' };
+  if (pathname === '/applications') return { kicker: 'Review', title: 'Loan Application Queue' };
+  if (pathname.startsWith('/applications/')) return { kicker: 'Review', title: 'Detailed Assessment' };
+  if (pathname === '/score') return { kicker: 'Wizard', title: 'Fin-Agri Scoring Engine' };
+  if (pathname === '/history') return { kicker: 'Auditing', title: 'Credit Committee Logs' };
+  if (pathname === '/reports') return { kicker: 'Intelligence', title: 'Bank Portfolio Reports' };
   return { kicker: 'Fin-Agri Score', title: 'Portfolio Management' };
 }
 
@@ -42,11 +42,17 @@ export default function AppLayout() {
   const [navOpen, setNavOpen] = useState(false);
   const { pathname } = useLocation();
   const top = useMemo(() => topbarForPath(pathname), [pathname]);
-  const { user, authDisabled, logout } = useAuth();
-  const displayName = user?.username || 'Loan officer';
+  const { user, authDisabled, logout, setUser } = useAuth();
+  
+  const role = user?.role || 'LOAN_OFFICER';
+  const displayName = user?.username || 'Authenticated User';
+
+  const filteredNav = useMemo(() => {
+    return NAV.filter(item => !item.roles || item.roles.includes(role));
+  }, [role]);
 
   return (
-    <div className={`app-shell ${navOpen ? 'nav-open' : ''}`}>
+    <div className={`app-shell ${navOpen ? 'nav-open' : ''} is-role-${role.toLowerCase()}`}>
       <a href="#main-content" className="skip-link">
         Skip to main content
       </a>
@@ -58,15 +64,19 @@ export default function AppLayout() {
       />
       <aside id="app-sidebar-nav" className="sidebar" aria-label="Main navigation">
         <div className="sidebar-brand">
-          <div className="logo">FA</div>
+          <div className="logo">{role === 'LOAN_OFFICER' ? 'FA' : 'BM'}</div>
           <div>
             <div className="brand-title">Fin-Agri Score</div>
-            <div className="brand-sub">Zimbabwe · Agricultural credit</div>
+            <div className="brand-sub">
+              {role === 'LOAN_OFFICER' ? 'Agri-Agent Workspace' : 
+               role === 'CREDIT_MANAGER' ? 'Risk Management Panel' : 
+               'System Administration'}
+            </div>
           </div>
         </div>
 
         <nav className="sidebar-nav">
-          {NAV.map((item) => (
+          {filteredNav.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -83,10 +93,9 @@ export default function AppLayout() {
         </nav>
 
         <div className="sidebar-footer">
-          <div className="sf-role">Signed in as</div>
+          <div className="sf-role">{role.replace('_', ' ')}</div>
           <div className="sf-name">{displayName}</div>
-          <div className="sf-sub">{authDisabled ? 'Enterprise Workspace' : 'Authenticated Session'}</div>
-          {/* Removed sign out button from here */}
+          <div className="sf-sub">Enterprise Hub</div>
         </div>
       </aside>
 

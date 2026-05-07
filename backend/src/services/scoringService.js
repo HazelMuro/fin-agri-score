@@ -26,6 +26,7 @@ const {
 const auditService = require('./auditService');
 const readinessService = require('./readinessService');
 const { getRescoreMinorBlendDecision } = require('./rescoreMinorBlend');
+const { calibrate } = require('./calibrationService');
 
 const DEDUPE_SECONDS = Number(process.env.SCORE_DEDUPE_SECONDS || 60);
 
@@ -241,11 +242,13 @@ async function scoreApplication(
     }
   }
 
-  const prediction = await inferenceClient.predict(
+  const rawPrediction = await inferenceClient.predict(
     featuresForModel,
     applicationId,
     minorBlendOpts
   );
+
+  const prediction = calibrate(rawPrediction, featuresForModel);
 
   const dataConfidence = computeDataConfidence({
     readiness,
@@ -253,18 +256,27 @@ async function scoreApplication(
     provenance,
   });
 
-  const probs = prediction.class_probabilities || {};
-  let pRepayment =
-    prediction.p_low_risk != null
-      ? prediction.p_low_risk
-      : prediction.repayment_probability;
+  const provenanceSummary = summariseProvenance(provenance);
 
-  // Better proxy for "Confidence they will repay": 1 - P(HIGH_RISK)
-  if (probs.HIGH != null) {
-    pRepayment = 1 - probs.HIGH;
-  } else if (probs.LOW != null && probs.MEDIUM != null) {
-    pRepayment = probs.LOW + probs.MEDIUM;
+  const probs = prediction.class_probabilities || {};
+  let pRepayment = 0;
+  const finalScore = prediction.fin_agri_score || 0;
+
+  // Derive repayment probability directly from the final Fin-Agri Score
+  // to ensure absolute consistency between the score band and the displayed percentage.
+  if (finalScore >= 700) {
+    // LOW risk (700-850) -> 70% to 99%
+    pRepayment = 0.70 + ((finalScore - 700) / 150) * 0.29;
+  } else if (finalScore >= 550) {
+    // MEDIUM risk (550-699) -> 40% to 69%
+    pRepayment = 0.40 + ((finalScore - 550) / 149) * 0.29;
+  } else {
+    // HIGH risk (300-549) -> 10% to 39%
+    pRepayment = 0.10 + (Math.max(0, finalScore - 300) / 249) * 0.29;
   }
+  
+  // Ensure it stays between 0.01 and 0.99
+  pRepayment = Math.max(0.01, Math.min(0.99, pRepayment));
 
   const score = await prisma.creditScore.create({
     data: {

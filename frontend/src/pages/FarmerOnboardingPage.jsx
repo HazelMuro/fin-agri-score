@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FarmerForm from '../components/FarmerForm';
 import FarmActivityForm from '../components/FarmActivityForm';
@@ -14,7 +14,7 @@ import {
 
 const STEPS = [
   { id: 1, label: 'Personal & location' },
-  { id: 2, label: 'Household income' },
+  { id: 2, label: 'Revenue & Cash Flow' },
   { id: 3, label: 'Farm activity' },
   { id: 4, label: 'Social capital' },
   { id: 5, label: 'Environmental context' },
@@ -46,14 +46,13 @@ export default function FarmerOnboardingPage() {
     return Math.round((flags.filter(Boolean).length / flags.length) * 100);
   }, [farmer, householdSaved, activitySaved, socialSaved, envSaved]);
 
-  const maxUnlockedStep = useMemo(() => {
-    if (!farmer?.id) return 1;
-    if (!householdSaved) return 2;
-    if (!activitySaved) return 3;
-    if (!socialSaved) return 4;
-    if (!envSaved) return 5;
-    return 6;
-  }, [farmer, householdSaved, activitySaved, socialSaved, envSaved]);
+  // Auto‑skip the environmental preview if it has already been confirmed
+  useEffect(() => {
+    if (step === 5 && envSaved) {
+      setStep(6);
+    }
+  }, [step, envSaved]);
+
 
   const next = () => setStep((s) => Math.min(6, s + 1));
   const back = () => setStep((s) => Math.max(1, s - 1));
@@ -136,7 +135,7 @@ export default function FarmerOnboardingPage() {
       {step === 2 && (
         <div className="card">
           <div className="card-header">
-            <h2 style={{ margin: 0 }}>Step 2 · Household income</h2>
+            <h2 style={{ margin: 0 }}>Step 2 · Revenue & Cash Flow</h2>
           </div>
           <HouseholdIncomeForm
             farmerId={farmer?.id}
@@ -148,7 +147,7 @@ export default function FarmerOnboardingPage() {
             upsertFn={async (payload) => {
               const saved = await upsertHouseholdIncome(payload);
               setHouseholdSaved(true);
-              setToast('Household income saved.');
+              setToast('Revenue profile saved.');
               return saved;
             }}
             submitting={saving}
@@ -237,7 +236,7 @@ export default function FarmerOnboardingPage() {
             </div>
             <div className={`checklist-item ${householdSaved ? 'is-ok' : 'is-partial'}`}>
               <span style={{ fontWeight: 700 }}>{householdSaved ? '✓' : '◐'}</span>
-              <div>Household income</div>
+              <div>Revenue & Cash Flow</div>
             </div>
             <div className={`checklist-item ${activitySaved ? 'is-ok' : 'is-partial'}`}>
               <span style={{ fontWeight: 700 }}>{activitySaved ? '✓' : '◐'}</span>

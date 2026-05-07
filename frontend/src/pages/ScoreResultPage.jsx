@@ -262,12 +262,12 @@ export default function ScoreResultPage() {
                   <SourceBadge sat={satellite} />
                 </div>
                 <div className="kv-grid">
-                  <EnvKV label="Rainfall 30d (mm)"    value={satellite.rainfall30dMm}   />
-                  <EnvKV label="Rainfall 90d (mm)"    value={satellite.rainfall90dMm}   />
-                  <EnvKV label="NDVI mean (0–1)"      value={satellite.ndvi90dMean?.toFixed(3)}  />
-                  <EnvKV label="NDVI variability"     value={satellite.ndvi90dStd?.toFixed(3)}   />
-                  <EnvKV label="Environment score"    value={satellite.environmentScore} />
-                  <EnvKV label="Environment risk"     value={satellite.environmentRisk}  />
+                  <EnvKV label="Recent Rainfall (30d)"   value={satellite.rainfall30dMm != null ? `${satellite.rainfall30dMm} mm` : '—'} />
+                  <EnvKV label="Seasonal Rainfall (90d)" value={satellite.rainfall90dMm != null ? `${satellite.rainfall90dMm} mm` : '—'} />
+                  <EnvKV label="Crop Health Index"      value={satellite.ndvi90dMean?.toFixed(3)}  />
+                  <EnvKV label="Growth Stability"       value={satellite.ndvi90dStd?.toFixed(3)}   />
+                  <EnvKV label="Environmental Resilience" value={satellite.environmentScore} />
+                  <EnvKV label="Agro-Climate Risk"      value={satellite.environmentRisk}  />
                 </div>
                 {satellite.confirmedAt && (
                   <div className="banner is-ok mt-3">

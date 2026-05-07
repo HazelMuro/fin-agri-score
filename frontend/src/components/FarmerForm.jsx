@@ -41,6 +41,19 @@ function buildWardLine(baseWard, primaryCrop, gpsCoordinates, groupMember) {
   return parts.length ? parts.join(' · ') : undefined;
 }
 
+const DISTRICT_GPS_MAP = {
+  'Zvimba': '-17.65, 30.33',
+  'Mutasa': '-18.60, 32.65',
+  'Chiredzi': '-21.05, 31.67',
+  'Matobo': '-20.50, 28.50',
+  'Goromonzi': '-17.85, 31.35',
+  'Gokwe South': '-18.21, 28.93',
+  'Hwange': '-18.36, 26.50',
+  'Chipinge': '-20.20, 32.62',
+  'Murewa': '-17.65, 31.78',
+  'Mazowe': '-17.50, 30.98',
+};
+
 export default function FarmerForm({ onSubmit, submitting }) {
   const [form, setForm] = useState({
     fullName: '',
@@ -70,6 +83,15 @@ export default function FarmerForm({ onSubmit, submitting }) {
       .then((res) => setDistricts(res.data?.items || []))
       .catch(() => setDistricts([]));
   }, [form.province]);
+
+  useEffect(() => {
+    if (form.district && DISTRICT_GPS_MAP[form.district] && !form.gpsCoordinates) {
+      setForm(prev => ({
+        ...prev,
+        gpsCoordinates: DISTRICT_GPS_MAP[form.district]
+      }));
+    }
+  }, [form.district, form.gpsCoordinates]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -189,7 +211,7 @@ export default function FarmerForm({ onSubmit, submitting }) {
             </select>
           </div>
           <div className="field">
-            <label className="field-label">Monthly household income (USD)</label>
+            <label className="field-label">Est. monthly productive revenue (USD)</label>
             <input
               className="input"
               type="number"
@@ -197,7 +219,7 @@ export default function FarmerForm({ onSubmit, submitting }) {
               step="1"
               value={form.monthlyHouseholdIncome}
               onChange={set('monthlyHouseholdIncome')}
-              placeholder="optional — saved to household income"
+              placeholder="Average monthly revenue from all agri-activities"
             />
           </div>
         </div>

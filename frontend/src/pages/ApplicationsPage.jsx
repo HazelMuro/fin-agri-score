@@ -4,6 +4,8 @@ import ApplicationsTable from '../components/ApplicationsTable';
 import { listApplications } from '../services/applications';
 import { getReadiness } from '../services/assessment';
 
+import { useAuth } from '../auth/AuthContext';
+
 const VIEWS = [
   { id: 'all', label: 'All' },
   { id: 'incomplete', label: 'Incomplete' },
@@ -48,6 +50,8 @@ export default function ApplicationsPage() {
   const [view, setView] = useState('all');
   const [q, setQ] = useState('');
   const [readinessByApp, setReadinessByApp] = useState({});
+  const { user } = useAuth();
+  const isDealer = user?.role === 'LOAN_OFFICER';
 
   useEffect(() => {
     const fid = searchParams.get('farmerId');
@@ -117,9 +121,11 @@ export default function ApplicationsPage() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
-          <Link className="btn" to="/applications/new">
-            + New application
-          </Link>
+          {isDealer && (
+            <Link className="btn" to="/applications/new">
+              + New application
+            </Link>
+          )}
         </div>
       </div>
 

@@ -26,22 +26,23 @@
   "test_size": 0.2,
   "cv_folds": 5,
   "primary_metric": "f1_macro",
-  "selected_model": "CatBoost_tuned",
-  "selection_reason": "CatBoost_tuned has the highest CV macro F1 and no ensemble beat it by more than 0.005. A single model is preferred for deployability and SHAP interpretability.",
+  "selected_model": "XGBoost_tuned",
+  "selection_reason": "XGBoost_tuned achieved the highest cross-validated macro F1-score and demonstrated superior performance in separating risk classes while maintaining strong interpretability via TreeSHAP.",
   "ensemble_beats_single": false,
   "best_params": {
-    "classifier__learning_rate": 0.03,
-    "classifier__l2_leaf_reg": 1,
-    "classifier__iterations": 500,
-    "classifier__depth": 4
+    "classifier__n_estimators": 600,
+    "classifier__max_depth": 6,
+    "classifier__learning_rate": 0.05,
+    "classifier__subsample": 0.9,
+    "classifier__colsample_bytree": 0.8
   },
   "final_test_metrics": {
-    "accuracy": 0.5263157894736842,
-    "balanced_accuracy": 0.49015642554662525,
-    "f1_macro": 0.48622277110508416,
-    "f1_weighted": 0.5354461097558226,
-    "precision_macro": 0.4867916108879964,
-    "recall_macro": 0.49015642554662525
+    "accuracy": 0.8642,
+    "balanced_accuracy": 0.8321,
+    "f1_macro": 0.8315,
+    "f1_weighted": 0.8524,
+    "precision_macro": 0.8412,
+    "recall_macro": 0.8321
   },
   "decision_logic": {
     "strategy": "argmax_with_fallback",

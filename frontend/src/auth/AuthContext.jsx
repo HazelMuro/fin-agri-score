@@ -31,7 +31,7 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(() => {
     clearAccessToken();
-    localStorage.removeItem('finagri_mock_login');
+    sessionStorage.removeItem('finagri_mock_login');
     setUser(null);
     setAuthDisabled(false);
     window.location.assign('/login');

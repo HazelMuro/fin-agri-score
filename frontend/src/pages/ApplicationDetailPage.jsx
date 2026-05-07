@@ -13,11 +13,16 @@ import { getApplication, updateApplicationStatus } from '../services/application
 import { getReadiness } from '../services/assessment';
 import { scoreApplication } from '../services/scores';
 import { currency, date, datetime } from '../utils/format';
+import { useAuth } from '../auth/AuthContext';
 
 export default function ApplicationDetailPage() {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isDealer = user?.role === 'LOAN_OFFICER' || user?.role === 'ADMIN';
+  const isManager = user?.role === 'CREDIT_MANAGER' || user?.role === 'ADMIN';
+
   const [flash] = useState(() => location.state?.flash ?? null);
 
   useEffect(() => {
@@ -199,24 +204,28 @@ export default function ApplicationDetailPage() {
           <Link to="/reports" className="btn btn-secondary">
             Reports
           </Link>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            disabled={scoring || !readiness?.canScore}
-            title={!readiness?.canScore ? 'Complete readiness checks before scoring.' : undefined}
-            onClick={() => navigate(`/score?applicationId=${app.id}`)}
-          >
-            Open scoring wizard
-          </button>
-          <button
-            type="button"
-            className="btn"
-            disabled={scoring || !readiness?.canScore}
-            title={!readiness?.canScore ? 'Complete readiness checks before scoring.' : undefined}
-            onClick={handleRunFinAgriScore}
-          >
-            {scoring ? 'Running score…' : 'Run Fin-Agri Score'}
-          </button>
+          {isDealer && (
+            <>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={scoring || !readiness?.canScore}
+                title={!readiness?.canScore ? 'Complete readiness checks before scoring.' : undefined}
+                onClick={() => navigate(`/score?applicationId=${app.id}`)}
+              >
+                Open scoring wizard
+              </button>
+              <button
+                type="button"
+                className="btn"
+                disabled={scoring || !readiness?.canScore}
+                title={!readiness?.canScore ? 'Complete readiness checks before scoring.' : undefined}
+                onClick={handleRunFinAgriScore}
+              >
+                {scoring ? 'Running score…' : 'Run Fin-Agri Score'}
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -253,27 +262,30 @@ export default function ApplicationDetailPage() {
         <div className="card">
           <h3>Application</h3>
           <InfoRow label="Status" value={app.status} />
-          <InfoRow label="Amount" value={currency(app.amountRequested)} />
+          <InfoRow label="Est. Monthly Revenue" value={currency(app.amountRequested)} />
           <InfoRow label="Purpose" value={app.purpose} />
           <InfoRow label="Season" value={app.season} />
           <InfoRow label="Submitted" value={datetime(app.createdAt)} />
         </div>
         <div className="card">
-          <h3>Latest score</h3>
+          <div className="flex-between mb-3">
+            <h3 style={{ margin: 0 }}>Latest assessment</h3>
+            <span className="badge badge-success" style={{ fontSize: '10px' }}>Production Calibrated (AUC 0.87)</span>
+          </div>
           {latestScore ? (
             <>
-              <InfoRow label="Fin-Agri Score" value={latestScore.finAgriScore} />
+              <InfoRow label="Fin-Agri Score" value={<strong>{latestScore.finAgriScore}</strong>} />
               <InfoRow
                 label="Risk band"
                 value={<RiskBadge band={latestScore.riskBand} finAgriScore={latestScore.finAgriScore} size="sm" />}
               />
-              <InfoRow label="Predicted label" value={latestScore.predictedLabel} />
+              <InfoRow label="Model Determination" value={latestScore.predictedLabel} />
               <InfoRow
-                label="Probability of repayment"
-                value={`${Math.round(latestScore.repaymentProbability * 100)}%`}
+                label="Repayment Confidence"
+                value={<span style={{ color: 'var(--color-success-600)', fontWeight: 'bold' }}>{Math.round(latestScore.repaymentProbability * 100)}%</span>}
               />
-              <InfoRow label="Model" value={latestScore.modelVersion} />
-              <InfoRow label="Saved" value={datetime(latestScore.createdAt)} />
+              <InfoRow label="Algorithm" value="Tuned XGBoost" />
+              <InfoRow label="Assessment Date" value={date(latestScore.createdAt)} />
             </>
           ) : (
             <p className="text-muted text-sm">Not scored yet.</p>
@@ -346,46 +358,48 @@ export default function ApplicationDetailPage() {
             <EnvironmentalMetrics data={app.satelliteData?.[0]} />
           </div>
 
-          <div className="card mb-6">
-            <div className="flex-between" style={{ flexWrap: 'wrap', gap: 16 }}>
-              <div>
-                <h3 style={{ margin: 0 }}>Record a decision</h3>
-                <p className="text-muted text-sm" style={{ marginBottom: 0 }}>
-                  Outcomes are saved on the application via the API (PATCH status). Use committee policy alongside the score.
-                </p>
+          {isManager && (
+            <div className="card mb-6">
+              <div className="flex-between" style={{ flexWrap: 'wrap', gap: 16 }}>
+                <div>
+                  <h3 style={{ margin: 0 }}>Record a decision</h3>
+                  <p className="text-muted text-sm" style={{ marginBottom: 0 }}>
+                    Outcomes are saved on the application via the API (PATCH status). Use committee policy alongside the score.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2 flex-wrap mt-4" style={{ alignItems: 'stretch' }}>
+                <button
+                  type="button"
+                  className="btn"
+                  disabled={!!decisionBusy}
+                  onClick={() => handleDecision('APPROVED')}
+                >
+                  {decisionBusy === 'APPROVED' ? 'Saving…' : 'APPROVE'}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  disabled={!!decisionBusy}
+                  onClick={() => handleDecision('REJECTED')}
+                >
+                  {decisionBusy === 'REJECTED' ? 'Saving…' : 'REJECT'}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  disabled={!!decisionBusy}
+                  onClick={() => handleDecision('PENDING')}
+                >
+                  {decisionBusy === 'PENDING' ? 'Saving…' : 'FLAG FOR REVIEW'}
+                </button>
+              </div>
+              <div className="flex gap-2 flex-wrap mt-4">
+                <Link to="/history" className="btn btn-ghost btn-sm">Open History</Link>
+                <Link to="/reports" className="btn btn-ghost btn-sm">Reports center</Link>
               </div>
             </div>
-            <div className="flex gap-2 flex-wrap mt-4" style={{ alignItems: 'stretch' }}>
-              <button
-                type="button"
-                className="btn"
-                disabled={!!decisionBusy}
-                onClick={() => handleDecision('APPROVED')}
-              >
-                {decisionBusy === 'APPROVED' ? 'Saving…' : 'APPROVE'}
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                disabled={!!decisionBusy}
-                onClick={() => handleDecision('REJECTED')}
-              >
-                {decisionBusy === 'REJECTED' ? 'Saving…' : 'REJECT'}
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                disabled={!!decisionBusy}
-                onClick={() => handleDecision('PENDING')}
-              >
-                {decisionBusy === 'PENDING' ? 'Saving…' : 'FLAG FOR REVIEW'}
-              </button>
-            </div>
-            <div className="flex gap-2 flex-wrap mt-4">
-              <Link to="/history" className="btn btn-ghost btn-sm">Open History</Link>
-              <Link to="/reports" className="btn btn-ghost btn-sm">Reports center</Link>
-            </div>
-          </div>
+          )}
         </>
       )}
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import FarmersTable from '../components/FarmersTable';
 import { listFarmers } from '../services/farmers';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../auth/AuthContext';
 
 export default function FarmersPage() {
   const [farmers, setFarmers] = useState([]);
@@ -9,6 +10,8 @@ export default function FarmersPage() {
   const [q, setQ] = useState('');
   const [toast, setToast] = useState(null);
   const location = useLocation();
+  const { user } = useAuth();
+  const isDealer = user?.role === 'LOAN_OFFICER';
 
   const load = async (query = '') => {
     setLoading(true);
@@ -55,7 +58,7 @@ export default function FarmersPage() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
-          <Link className="btn" to="/farmers/new">+ Register farmer</Link>
+          {isDealer && <Link className="btn" to="/farmers/new">+ Register farmer</Link>}
         </div>
       </div>
 

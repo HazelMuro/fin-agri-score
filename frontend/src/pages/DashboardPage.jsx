@@ -23,6 +23,7 @@ import { Link } from 'react-router-dom';
 import RiskBadge from '../components/RiskBadge';
 import { datetime } from '../utils/format';
 import TableScroll from '../components/TableScroll';
+import { useAuth } from '../auth/AuthContext';
 
 const RISK_COLORS = {
   Low: 'var(--color-risk-low)',
@@ -46,6 +47,10 @@ const CHART_LEGEND_PROPS = {
 };
 
 export default function DashboardPage() {
+  const { user } = useAuth();
+  const role = user?.role || 'LOAN_OFFICER';
+  const isDealer = role === 'LOAN_OFFICER';
+
   const { data, loading, error } = useApi(getOverview, { immediate: true });
   const {
     data: scoreHistory,
@@ -56,12 +61,25 @@ export default function DashboardPage() {
     <div className="page">
       <div className="page-header">
         <div>
-          <h1 className="page-title">Portfolio overview</h1>
-          <p className="page-subtitle">Applications, scoring activity, and risk at a glance.</p>
+          <h1 className="page-title">{isDealer ? 'Field Operations' : 'Portfolio Management'}</h1>
+          <p className="page-subtitle">
+            {isDealer 
+              ? 'Track your onboarding progress and farmer assessments in the field.' 
+              : 'Review total portfolio health, risk distributions, and credit approvals.'}
+          </p>
         </div>
         <div className="flex gap-2">
-          <Link to="/farmers/new" className="btn btn-secondary">+ New farmer</Link>
-          <Link to="/applications/new" className="btn">+ New application</Link>
+          {isDealer ? (
+            <>
+              <Link to="/farmers/new" className="btn btn-secondary">Onboard Farmer</Link>
+              <Link to="/score" className="btn">Run Score Wizard</Link>
+            </>
+          ) : (
+            <>
+              <Link to="/reports" className="btn btn-secondary">Export Committee Pack</Link>
+              <Link to="/applications" className="btn">Review Loan Queue</Link>
+            </>
+          )}
         </div>
       </div>
 
@@ -70,19 +88,19 @@ export default function DashboardPage() {
 
       {data && (
         <>
-          <HeroBand data={data} />
+          <HeroBand data={data} role={role} />
 
           <div className="grid-4 mb-6">
-            <SummaryCard label="Registered farmers" value={data.totals.farmers} icon="👥" tone="primary" delayClass="anim-d1" />
-            <SummaryCard label="Loan applications" value={data.totals.applications} icon="📄" tone="default" delayClass="anim-d2" />
-            <SummaryCard label="Scored applications" value={data.totals.scoredApplications} icon="🎯" tone="accent" delayClass="anim-d3" />
-            <SummaryCard label="Average Fin-Agri Score" value={data.totals.avgFinAgriScore || '—'} icon="★" tone="primary" hint="across all scored loans" delayClass="anim-d4" />
+            <SummaryCard label={isDealer ? "My Farmers" : "Total Farmers"} value={data.totals.farmers} icon="👥" tone="primary" delayClass="anim-d1" />
+            <SummaryCard label={isDealer ? "Pending Onboarding" : "Loan Queue"} value={data.totals.applications} icon="📄" tone="default" delayClass="anim-d2" />
+            <SummaryCard label={isDealer ? "Completed Scores" : "Total Scored"} value={data.totals.scoredApplications} icon="🎯" tone="accent" delayClass="anim-d3" />
+            <SummaryCard label="Avg Portfolio Score" value={data.totals.avgFinAgriScore || '—'} icon="★" tone="primary" hint={isDealer ? "your average quality" : "bank-wide quality"} delayClass="anim-d4" />
           </div>
 
           <div className="grid-2 mb-6 anim-fade-up anim-d1">
             <div className="card">
               <div className="card-header">
-                <h2 style={{ margin: 0 }}>Monthly flow</h2>
+                <h2 style={{ margin: 0 }}>{isDealer ? "My Activity Trend" : "Bank-Wide Volume"}</h2>
                 <span className="badge badge-neutral">Last 6 months</span>
               </div>
               <MonthlyTrendChart points={data.monthlyTrend || []} />
@@ -90,17 +108,25 @@ export default function DashboardPage() {
 
             <div className="card">
               <div className="card-header">
-                <h2 style={{ margin: 0 }}>Portfolio risk distribution</h2>
-                <span className="badge badge-info">{data.totals.scoredApplications} scored</span>
+                <h2 style={{ margin: 0 }}>{isDealer ? "My Quality Distribution" : "Portfolio Risk Distribution"}</h2>
+                <div className="flex gap-2">
+                   {!isDealer && <span className="badge badge-success" title="Macro-F1 weighting applied to handle class imbalance">⚖️ Balanced</span>}
+                   <span className="badge badge-info">{data.totals.scoredApplications} scored</span>
+                </div>
               </div>
               <RiskDistributionChart distribution={data.riskDistribution} />
+              {!isDealer && (
+                <div className="text-xs text-muted mt-2 p-2 rounded" style={{ background: 'var(--color-surface-alt)', border: '1px solid var(--color-border)' }}>
+                  <strong>Scoring Fairness Guard:</strong> This system uses automatic balancing to ensure that all farmers are assessed fairly based on their actual productivity, regardless of the historical data distribution.
+                </div>
+              )}
             </div>
           </div>
 
           <div className="grid-2 mb-6 anim-fade-up anim-d2">
             <div className="card">
               <div className="card-header">
-                <h2 style={{ margin: 0 }}>Risk breakdown</h2>
+                <h2 style={{ margin: 0 }}>Risk summary</h2>
               </div>
               <div className="stack-sm">
                 <RiskRow label="Low risk" count={data.riskDistribution.Low} total={data.totals.scoredApplications} color={RISK_COLORS.Low} />
@@ -108,16 +134,18 @@ export default function DashboardPage() {
                 <RiskRow label="High risk" count={data.riskDistribution.High} total={data.totals.scoredApplications} color={RISK_COLORS.High} />
               </div>
               <p className="text-xs text-muted mt-4" style={{ marginBottom: 0 }}>
-                Low-risk applications meet approval thresholds cleanly. Medium-risk cases should be approved with mitigants. High-risk cases warrant manual review.
+                {isDealer 
+                  ? 'Aim for complete profiles to move farmers from High to Low risk via better data coverage.'
+                  : 'Low-risk applications meet approval thresholds cleanly. Medium cases require committee review.'}
               </p>
             </div>
 
-            <AttentionPanel attention={data.attention || {}} />
+            <AttentionPanel attention={data.attention || {}} role={role} />
           </div>
 
           <div className="card">
             <div className="card-header">
-              <h2 style={{ margin: 0 }}>Recent loan applications</h2>
+              <h2 style={{ margin: 0 }}>{isDealer ? "My recent farmers" : "Recent incoming loans"}</h2>
               <Link to="/applications" className="btn btn-ghost btn-sm">View all →</Link>
             </div>
             <ApplicationsTable applications={data.recentApplications} />
@@ -125,7 +153,7 @@ export default function DashboardPage() {
 
           <div className="card mt-6">
             <div className="card-header">
-              <h2 style={{ margin: 0 }}>Recent score activity</h2>
+              <h2 style={{ margin: 0 }}>{isDealer ? "My assessment history" : "Bank decision audit"}</h2>
               <div className="flex gap-2">
             <Link to="/reports" className="btn btn-ghost btn-sm">
               Reports
@@ -192,8 +220,10 @@ function RecentScoreActivity({ items }) {
   );
 }
 
-function HeroBand({ data }) {
+function HeroBand({ data, role }) {
   const a = data.attention || {};
+  const isDealer = role === 'LOAN_OFFICER';
+  
   return (
     <div
       className="card mb-6 anim-fade-up"
@@ -209,24 +239,27 @@ function HeroBand({ data }) {
       <div style={{ position: 'relative', zIndex: 1 }}>
         <div className="flex-between" style={{ gap: 24, flexWrap: 'wrap' }}>
           <div style={{ maxWidth: 500 }}>
-            <h2 style={{ color: '#fff', fontSize: 24, margin: 0 }}>Lending operations</h2>
+            <h2 style={{ color: '#fff', fontSize: 24, margin: 0 }}>
+              {isDealer ? 'Field Intake Hub' : 'Portfolio Operations'}
+            </h2>
             <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, marginTop: 8, lineHeight: 1.6 }}>
-              You have {a.pendingApplications || 0} applications in the pipeline. 
-              {a.unscoredApplications > 0 ? ` ${a.unscoredApplications} are awaiting their first credit assessment.` : ' Your scoring queue is currently clear.'}
+              {isDealer 
+                ? `You have ${a.pendingApplications || 0} farmers in your onboarding pipeline. Get them scored to help the bank make faster decisions.`
+                : `There are ${a.pendingApplications || 0} applications in the bank-wide queue. ${a.unscoredApplications > 0 ? `${a.unscoredApplications} require scoring.` : 'All are ready for committee review.'}`}
             </p>
             <div className="flex gap-3 mt-6">
-              <Link to="/score" className="btn btn-lg" style={{ background: '#fff', color: 'var(--color-primary)' }}>
-                Run scoring wizard →
+              <Link to={isDealer ? "/score" : "/applications"} className="btn btn-lg" style={{ background: '#fff', color: 'var(--color-primary)' }}>
+                {isDealer ? 'Score Farmer →' : 'Review Queue →'}
               </Link>
-              <Link to="/applications" className="btn btn-lg btn-ghost" style={{ color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}>
-                Review queue
+              <Link to={isDealer ? "/farmers/new" : "/reports"} className="btn btn-lg btn-ghost" style={{ color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}>
+                {isDealer ? 'Add New Farmer' : 'Generate Reports'}
               </Link>
             </div>
           </div>
 
           <div className="flex gap-6" style={{ flexWrap: 'wrap' }}>
-            <HeroMetric label="Pending" value={a.pendingApplications || 0} />
-            <HeroMetric label="Awaiting Score" value={a.unscoredApplications || 0} />
+            <HeroMetric label={isDealer ? "My Pipeline" : "Bank Queue"} value={a.pendingApplications || 0} />
+            <HeroMetric label={isDealer ? "Pending Score" : "Awaiting Decision"} value={a.unscoredApplications || 0} />
             <HeroMetric label="High Risk (30d)" value={a.highRiskRecent || 0} tone="danger" />
           </div>
         </div>
@@ -254,31 +287,32 @@ function HeroMetric({ label, value, tone }) {
   );
 }
 
-function AttentionPanel({ attention }) {
+function AttentionPanel({ attention, role }) {
+  const isDealer = role === 'LOAN_OFFICER';
   const rows = [
     {
-      label: 'Pending decisions',
+      label: isDealer ? 'My pending farmers' : 'Pending bank decisions',
       value: attention.pendingApplications || 0,
       tone: 'var(--color-risk-medium)',
-      hint: 'Applications still in PENDING status',
+      hint: isDealer ? 'Farmers you started onboarding' : 'Applications in PENDING status',
     },
     {
-      label: 'Awaiting first score',
+      label: isDealer ? 'Awaiting my score run' : 'Awaiting first score',
       value: attention.unscoredApplications || 0,
       tone: 'var(--color-info)',
-      hint: 'Applications without any saved score run',
+      hint: isDealer ? 'Farmers you haven\'t scored yet' : 'Apps without any assessment',
     },
     {
       label: 'High-risk in last 30 days',
       value: attention.highRiskRecent || 0,
       tone: 'var(--color-risk-high)',
-      hint: 'Recent cases requiring tighter review',
+      hint: 'Cases requiring manual follow-up',
     },
     {
-      label: 'Submitted in last 30 days',
+      label: isDealer ? 'My new onboardings' : 'Portfolio intake',
       value: attention.recentlySubmittedApplications || 0,
       tone: 'var(--color-risk-low)',
-      hint: 'Pipeline intake volume',
+      hint: 'Activity in the last 30 days',
     },
   ];
 

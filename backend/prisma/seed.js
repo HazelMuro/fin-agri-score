@@ -28,6 +28,12 @@ async function seedUsers() {
     update: {},
     create: { username: 'loan.officer', email: 'officer@fin-agri.zw', passwordHash: officerHash, role: 'LOAN_OFFICER' },
   });
+  const managerHash = await bcrypt.hash('manager123', 10);
+  await prisma.user.upsert({
+    where: { username: 'credit.manager' },
+    update: {},
+    create: { username: 'credit.manager', email: 'manager@fin-agri.zw', passwordHash: managerHash, role: 'CREDIT_MANAGER' },
+  });
 }
 
 async function seedDistricts() {

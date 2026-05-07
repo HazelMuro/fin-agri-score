@@ -6,7 +6,7 @@ const KEY = 'finagri_access_token';
 
 export function getAccessToken() {
   try {
-    return localStorage.getItem(KEY) || '';
+    return sessionStorage.getItem(KEY) || '';
   } catch {
     return '';
   }
@@ -14,8 +14,8 @@ export function getAccessToken() {
 
 export function setAccessToken(token) {
   try {
-    if (token) localStorage.setItem(KEY, token);
-    else localStorage.removeItem(KEY);
+    if (token) sessionStorage.setItem(KEY, token);
+    else sessionStorage.removeItem(KEY);
   } catch {
     /* ignore */
   }
